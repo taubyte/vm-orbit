@@ -8,7 +8,9 @@ import (
 	"github.com/taubyte/go-interfaces/services/tns/mocks"
 	"github.com/taubyte/go-interfaces/vm"
 	"github.com/taubyte/utils/id"
-	vmPlugin "github.com/taubyte/vm-orbit/vm"
+	orbit "github.com/taubyte/vm-orbit"
+
+	fileBE "github.com/taubyte/vm/backend/file"
 	"github.com/taubyte/vm/context"
 	loader "github.com/taubyte/vm/loaders/wazero"
 	resolver "github.com/taubyte/vm/resolvers/taubyte"
@@ -19,7 +21,7 @@ import (
 func TestPlugin(t *testing.T) {
 	tns := mocks.New()
 	rslver := resolver.New(tns)
-	ldr := loader.New(rslver)
+	ldr := loader.New(rslver, fileBE.New())
 	src := source.New(ldr)
 	ctx := goCTX.TODO()
 	vmService := service.New(ctx, src)
@@ -60,7 +62,7 @@ func TestPlugin(t *testing.T) {
 		return
 	}
 
-	plugin, err := vmPlugin.Load("/home/tafkhan/Documents/Work/Taubyte/Repos/vm-orbit/testing/plugin/plugin", "testplugin")
+	plugin, err := orbit.Load("/home/tafkhan/Documents/Work/Taubyte/Repos/vm-orbit/testing/plugin/plugin", "testplugin")
 	if err != nil {
 		t.Error(err)
 		return
@@ -72,13 +74,23 @@ func TestPlugin(t *testing.T) {
 		return
 	}
 
-	fi, err := mi.Function("upperCase")
+	mod, err := rt.Module("/file/" + "/home/tafkhan/Documents/Work/Taubyte/Repos/vm-orbit/testing/main.wasm")
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	ret := fi.Call(ctx, "hello world")
+	for _, fx := range mi.Functions() {
+		fmt.Printf("%#v\n", fx)
+	}
+
+	fi, err := mod.Function("ping")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	ret := fi.Call(ctx)
 	fmt.Println(ret.Error())
 
 }

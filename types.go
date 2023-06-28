@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"reflect"
+	"time"
 
 	"github.com/hashicorp/go-plugin"
 	"github.com/taubyte/go-interfaces/vm"
@@ -16,7 +18,8 @@ import (
 /****************************************** Basic Interface ************************************************/
 
 type Satellite interface {
-	Symbols() ([]vm.FunctionDefinition, error)
+	Meta(context.Context) (*proto.Metadata, error)
+	Symbols(context.Context) ([]vm.FunctionDefinition, error)
 	Call(ctx context.Context, module vm.Module, function string, inputs []uint64) ([]uint64, error)
 }
 
@@ -91,26 +94,23 @@ func (st *satellite) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error
 }
 
 func (p *satellite) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
-	return nil, errors.New("Can't create a link (satellite client) from main process")
+	return nil, errors.New("can't create a link (satellite client) from main process")
 
 }
 
 func (p *link) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
-	return errors.New("Can't create a satelite server from main process")
+	return errors.New("can't create a satelite server from main process")
 }
 
 func (p *link) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
-	_ctx, _ctxC := context.WithCancel(ctx)
 	return &GRPCPluginClient{
 		client: proto.NewPluginClient(c),
 		broker: broker,
-		ctx:    _ctx,
-		ctxC:   _ctxC,
 	}, nil
 }
 
 // var ctxType = reflect.TypeOf((context.Background())).Elem()
-var moduleType = reflect.TypeOf((Module)(nil)).Elem()
+var moduleType = reflect.TypeOf((*Module)(nil)).Elem()
 
 func (p *GRPCPluginServer) Symbols(context.Context, *proto.Empty) (*proto.FunctionDefinitions, error) {
 	ret := &proto.FunctionDefinitions{
@@ -124,7 +124,7 @@ func (p *GRPCPluginServer) Symbols(context.Context, *proto.Empty) (*proto.Functi
 
 		argsType := make([]proto.Type, 0, fx.NumIn())
 		for i := 0; i < fx.NumIn(); i++ {
-			if (i == 0 && fx.In(i) == ctxType) || (i == 1 && fx.In(i) == moduleType) {
+			if (i == 0 && fx.In(i).Implements(ctxType)) || (i == 1 && fx.In(i).Implements(moduleType)) {
 				continue
 			}
 			switch fx.In(i).Kind() {
@@ -170,6 +170,10 @@ func (p *GRPCPluginServer) Meta(context.Context, *proto.Empty) (*proto.Metadata,
 }
 
 func (p *GRPCPluginServer) Call(ctx context.Context, req *proto.CallRequest) (*proto.CallReturn, error) {
+	f, _ := os.Create("/tmp/log.txt")
+	defer f.Close()
+	fmt.Fprintf(f, ">>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
+	time.Sleep(time.Second)
 	conn, err := p.broker.Dial(req.Broker)
 	if err != nil {
 		return nil, err
@@ -195,6 +199,24 @@ func (p *GRPCPluginServer) Call(ctx context.Context, req *proto.CallRequest) (*p
 		in = append(in, reflect.ValueOf(mod))
 	}
 
+	for _, v := range req.Inputs {
+		var rv reflect.Value
+		switch tfx.In(len(in)).Kind() {
+		case reflect.Int32:
+			rv = reflect.ValueOf(int32(v))
+		case reflect.Int64:
+			rv = reflect.ValueOf(int64(v))
+		case reflect.Uint32:
+			rv = reflect.ValueOf(uint32(v))
+		case reflect.Uint64:
+			rv = reflect.ValueOf(uint64(v))
+		default:
+			return nil, fmt.Errorf("---------------")
+		}
+		in = append(in, rv)
+	}
+
+	fmt.Fprintf(f, ">>>>>>>>>>%#v\n", in)
 	out := fx.Call(in)
 
 	ret := make([]uint64, len(out))
@@ -311,8 +333,8 @@ func (m *module) MemoryWrite(ctx context.Context, req *proto.WriteRequest) (*pro
 
 /******************************************************/
 
-func (c *GRPCPluginClient) Symbols() ([]vm.FunctionDefinition, error) {
-	resp, err := c.client.Symbols(c.ctx, &proto.Empty{})
+func (c *GRPCPluginClient) Symbols(ctx context.Context) ([]vm.FunctionDefinition, error) {
+	resp, err := c.client.Symbols(ctx, &proto.Empty{})
 	if err != nil {
 		return nil, err
 	}
@@ -339,8 +361,8 @@ func (c *GRPCPluginClient) Symbols() ([]vm.FunctionDefinition, error) {
 	return funcDefs, nil
 }
 
-func (c *GRPCPluginClient) Meta(ctx context.Context, _ *proto.Empty) (*proto.Metadata, error) {
-	return c.client.Meta(c.ctx, &proto.Empty{})
+func (c *GRPCPluginClient) Meta(ctx context.Context) (*proto.Metadata, error) {
+	return c.client.Meta(ctx, &proto.Empty{})
 }
 
 func (c *GRPCPluginClient) Call(ctx context.Context, module vm.Module, function string, inputs []uint64) ([]uint64, error) {
@@ -385,8 +407,6 @@ func (c *GRPCPluginClient) Call(ctx context.Context, module vm.Module, function 
 type GRPCPluginClient struct {
 	broker *plugin.GRPCBroker
 	client proto.PluginClient
-	ctx    context.Context
-	ctxC   context.CancelFunc
 }
 
 // this is used by the plugin process to provide GRPC for GRPCPluginClient (main process)

@@ -3,6 +3,7 @@ package orbit
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os/exec"
 	"reflect"
 
@@ -64,6 +65,14 @@ func (p *vmPlugin) New(instance vm.Instance) (vm.PluginInstance, error) {
 		return nil, errors.New("not plugin")
 	}
 
+	meta, err := pluginClient.Meta(instance.Context().Context())
+	if err != nil {
+		return nil, err
+	}
+
+	p.name = meta.Name
+	fmt.Println("NAME:", p.name)
+
 	pI := &pluginInstance{
 		iface:    pluginClient,
 		plugin:   p,
@@ -73,10 +82,10 @@ func (p *vmPlugin) New(instance vm.Instance) (vm.PluginInstance, error) {
 	return pI, nil
 }
 
-var ctxType = reflect.TypeOf((context.Background())).Elem()
-var vmMmoduleType = reflect.TypeOf((vm.Module)(nil)).Elem()
-var I32Type = reflect.TypeOf((int32)(0)).Elem()
-var I64Type = reflect.TypeOf((int64)(0)).Elem()
+var ctxType = reflect.TypeOf((*context.Context)(nil)).Elem()
+var vmMmoduleType = reflect.TypeOf((*vm.Module)(nil)).Elem()
+var I32Type = reflect.TypeOf((*int32)(nil)).Elem()
+var I64Type = reflect.TypeOf((*int64)(nil)).Elem()
 
 func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) (interface{}, error) {
 	in := def.ParamTypes()
@@ -100,37 +109,45 @@ func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) (interface{
 	for idx, pt := range out {
 		switch pt {
 		case vm.ValueTypeI32:
-			_in[idx] = I32Type
+			_out[idx] = I32Type
 		case vm.ValueTypeI64:
-			_in[idx] = I64Type
+			_out[idx] = I64Type
 		}
 	}
+	fmt.Println("NAME:::", def.Name())
+	fmt.Printf("IN:: %#v\n", _in)
+	fmt.Printf("OUT:: %#v\n", _out)
 
 	_func := reflect.MakeFunc(
 		reflect.FuncOf(_in, _out, false),
 		func(args []reflect.Value) []reflect.Value {
+			fmt.Println("START")
+			defer fmt.Println("DONE")
 			if len(args) < 2 {
+				fmt.Println(1)
 				panic("")
 			}
 
 			ctx, ok := args[0].Interface().(context.Context)
 			if !ok {
+				fmt.Println(2)
 				panic("")
 			}
-			module, ok := args[1].Interface().(Module)
+			module, ok := args[1].Interface().(vm.Module)
 			if !ok {
+				fmt.Println(3)
 				panic("")
 			}
 
-			_in := make([]uint64, len(args)-2)
+			_in := make([]uint64, 0, len(args))
 			for i := 2; i < len(args); i++ {
 				// TODO: double check uint64(int64) makes just a type conversion
-				_in[i] = uint64(args[i].Int())
+				_in = append(_in, uint64(args[i].Int()))
 			}
 
 			cOut, err := p.iface.Call(ctx, module, def.Name(), _in)
 			if err != nil {
-				panic(err)
+				panic("-----" + err.Error())
 			}
 
 			_out := make([]reflect.Value, len(cOut))
@@ -150,7 +167,7 @@ func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) (interface{
 }
 
 func (p *pluginInstance) Load(hm vm.HostModule) (vm.ModuleInstance, error) {
-	defs, err := p.iface.Symbols()
+	defs, err := p.iface.Symbols(p.instance.Context().Context())
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +182,8 @@ func (p *pluginInstance) Load(hm vm.HostModule) (vm.ModuleInstance, error) {
 			Handler: h,
 		})
 	}
-	return nil, nil
+
+	return hm.Compile()
 }
 
 func (p *pluginInstance) Close() error {

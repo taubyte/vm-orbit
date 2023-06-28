@@ -9,7 +9,7 @@ require (
 	google.golang.org/grpc v1.56.1
 	google.golang.org/protobuf v1.30.0
 )
-
+replace github.com/tetratelabs/wazero => /home/tafkhan/Documents/Work/Taubyte/test/wazero
 replace github.com/taubyte/vm => ../vm
 
 require (

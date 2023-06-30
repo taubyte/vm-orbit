@@ -19,3 +19,11 @@ type module struct {
 	proto.UnimplementedModuleServer
 	module vm.Module
 }
+
+var _ vm.FunctionDefinition = &functionDefinition{}
+
+type functionDefinition struct {
+	name string
+	args []vm.ValueType
+	rets []vm.ValueType
+}

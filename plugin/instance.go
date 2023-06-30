@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	"github.com/taubyte/go-interfaces/vm"
-	"github.com/taubyte/vm-orbit/common"
 )
 
 func (p *pluginInstance) Load(hm vm.HostModule) (vm.ModuleInstance, error) {
@@ -30,9 +29,9 @@ func (p *pluginInstance) Load(hm vm.HostModule) (vm.ModuleInstance, error) {
 }
 
 func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) (interface{}, error) {
-	in := common.ByteTypesToReflect(def.ParamTypes(), []reflect.Type{vm.ContextType, vm.ModuleType})
+	in := bytesToReflect(def.ParamTypes(), []reflect.Type{vm.ContextType, vm.ModuleType})
 	outRaw := def.ResultTypes()
-	out := common.ByteTypesToReflect(outRaw, nil)
+	out := bytesToReflect(outRaw, nil)
 
 	_func := reflect.MakeFunc(
 		reflect.FuncOf(in, out, false),
@@ -80,4 +79,18 @@ func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) (interface{
 
 func (p *pluginInstance) Close() error {
 	return nil
+}
+
+func bytesToReflect(raw []vm.ValueType, defaults []reflect.Type) []reflect.Type {
+	types := make([]reflect.Type, 0, len(defaults)+len(raw))
+	types = append(types, defaults...)
+
+	for _, rawType := range raw {
+		switch rawType {
+		case vm.ValueTypeI32, vm.ValueTypeI64, vm.ValueTypeF32, vm.ValueTypeF64:
+			types = append(types, vm.ValueTypeToReflectType(rawType))
+		}
+	}
+
+	return types
 }

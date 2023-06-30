@@ -8,7 +8,6 @@ import (
 	"reflect"
 
 	"github.com/taubyte/go-interfaces/vm"
-	"github.com/taubyte/vm-orbit/common"
 	"github.com/taubyte/vm-orbit/proto"
 )
 
@@ -24,7 +23,7 @@ func (p *GRPCPluginServer) Symbols(context.Context, *proto.Empty) (*proto.Functi
 
 		argsType := make([]proto.Type, 0, fx.NumIn())
 		for i := 0; i < fx.NumIn(); i++ {
-			if (i == 0 && fx.In(i).Implements(vm.ContextType)) || (i == 1 && fx.In(i).Implements(common.ModuleType)) {
+			if (i == 0 && fx.In(i).Implements(vm.ContextType)) || (i == 1 && fx.In(i).Implements(moduleType)) {
 				continue
 			}
 			switch fx.In(i).Kind() {
@@ -92,7 +91,7 @@ func (p *GRPCPluginServer) Call(ctx context.Context, req *proto.CallRequest) (*p
 		in = append(in, reflect.ValueOf(ctx))
 	}
 
-	if tfx.NumIn() >= 2 && tfx.In(1) == common.ModuleType {
+	if tfx.NumIn() >= 2 && tfx.In(1) == moduleType {
 		in = append(in, reflect.ValueOf(mod))
 	}
 

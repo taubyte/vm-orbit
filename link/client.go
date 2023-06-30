@@ -2,10 +2,10 @@ package link
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/taubyte/go-interfaces/vm"
-	"github.com/taubyte/vm-orbit/common"
 	"github.com/taubyte/vm-orbit/proto"
 	"google.golang.org/grpc"
 )
@@ -22,17 +22,17 @@ func (c *GRPCPluginClient) Symbols(ctx context.Context) ([]vm.FunctionDefinition
 
 	funcDefs := make([]vm.FunctionDefinition, len(resp.Functions))
 	for idx, function := range resp.Functions {
-		args, err := common.TypesToBytes(function.Args)
+		args, err := typesToBytes(function.Args)
 		if err != nil {
 			return nil, clientErr("getting arg types failed with: %s", err)
 		}
 
-		rets, err := common.TypesToBytes(function.Rets)
+		rets, err := typesToBytes(function.Rets)
 		if err != nil {
 			return nil, clientErr("getting return types failed with: %s", err)
 		}
 
-		funcDefs[idx] = common.NewFuncDefinition(function.Name, args, rets)
+		funcDefs[idx] = &functionDefinition{function.Name, args, rets}
 	}
 
 	return funcDefs, nil
@@ -76,4 +76,18 @@ func (c *GRPCPluginClient) Call(ctx context.Context, module vm.Module, function 
 	}
 
 	return resp.Rets, nil
+}
+
+func typesToBytes(valueTypes []proto.Type) ([]vm.ValueType, error) {
+	types := make([]vm.ValueType, len(valueTypes))
+	for idx, vt := range valueTypes {
+		switch vm.ValueType(vt) {
+		case vm.ValueTypeF32, vm.ValueTypeF64, vm.ValueTypeI32, vm.ValueTypeI64:
+			types[idx] = vm.ValueType(vt)
+		default:
+			return nil, errors.New("unknown type")
+		}
+	}
+
+	return types, nil
 }

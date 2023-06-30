@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/go-plugin"
 	"github.com/taubyte/go-interfaces/vm"
-	"github.com/taubyte/vm-orbit/common"
 	"github.com/taubyte/vm-orbit/link"
 )
 
@@ -14,7 +13,7 @@ import (
 func Load(ma string) (vm.Plugin, error) {
 	p := &vmPlugin{address: ma}
 	p.client = plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: common.Handshake,
+		HandshakeConfig: Handshake,
 		Plugins:         link.ClientPluginMap,
 		Cmd:             exec.Command(ma),
 		AllowedProtocols: []plugin.Protocol{
@@ -45,7 +44,7 @@ func (p *vmPlugin) New(instance vm.Instance) (vm.PluginInstance, error) {
 		return nil, err
 	}
 
-	pluginClient, ok := raw.(common.Satellite)
+	pluginClient, ok := raw.(Satellite)
 	if !ok {
 		return nil, errors.New("not plugin")
 	}

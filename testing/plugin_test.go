@@ -34,8 +34,6 @@ func TestPlugin(t *testing.T) {
 		Cid:         id.Generate(),
 	}
 
-	// tns.Inject()
-
 	_ctx, err := context.New(
 		ctx,
 		context.Application(mocksConfig.Application),

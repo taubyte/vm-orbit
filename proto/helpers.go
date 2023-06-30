@@ -1,5 +1,7 @@
 package proto
 
+//go:generate protoc -I .  ./orbit.proto --go-grpc_out=../ --go_out=../ --experimental_allow_proto3_optional
+
 import (
 	"errors"
 	"io"

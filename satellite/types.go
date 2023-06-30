@@ -26,3 +26,8 @@ type moduleLink struct {
 	ctx    context.Context
 	client proto.ModuleClient
 }
+
+type Module interface {
+	MemoryRead(offset uint32, size uint32) ([]byte, error)
+	MemoryWrite(offset uint32, data []byte) (uint32, error)
+}

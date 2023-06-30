@@ -7,6 +7,7 @@ import (
 	"io"
 )
 
+// TODO: Below should be generated
 func (x IOError) Error() error {
 	switch x {
 	case IOError_none:

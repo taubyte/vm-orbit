@@ -2,8 +2,6 @@ syntax = "proto3";
 package proto;
 option go_package = "/proto";
 
-// protoc -I ./proto  ./proto/orbit.proto --go-grpc_out=. --go_out=. --experimental_allow_proto3_optional
-
 enum Type {
     unknown=0x00;
     i32=0x7f;
@@ -50,14 +48,12 @@ message Metadata {
 
 // comes from plugin
 message ReadRequest{
-    //uint32 broker =1;
     uint32 offset = 16;
     uint32 size = 17;
 }
 
 // comes from plugin
 message WriteRequest{
-    //uint32 broker =1;
     uint32 offset = 16; 
     bytes data = 17;
 }
@@ -67,12 +63,6 @@ message ReadReturn {
     IOError error = 2;
 }
 
-message Error {
-    string message = 1;
-    optional uint64 code = 2;
-}
-
-
 message WriteReturn {
     uint32 written = 1;
     IOError error = 2;
@@ -80,7 +70,6 @@ message WriteReturn {
 
 message CallReturn {
     repeated uint64 rets =1;
-    Error error =2;
 }
 
 service Plugin {

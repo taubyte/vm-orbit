@@ -14,7 +14,7 @@ func hello(ctx context.Context, module satellite.Module, num uint32) uint32 {
 	defer f.Close()
 
 	fmt.Println(module)
-	fmt.Fprintln(f, "The answer is: ", num)
+	fmt.Fprintln(f, "The new answer is: ", num)
 
 	return 0
 }

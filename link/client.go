@@ -72,14 +72,6 @@ func (c *GRPCPluginClient) Call(ctx context.Context, module vm.Module, function 
 	}
 	defer s.Stop()
 
-	if resp.Error != nil {
-		if resp.Error.Code != nil {
-			return nil, clientErr("`%s/%s` failed with code: %d", module.Name(), function, *resp.Error.Code)
-		}
-
-		return nil, clientErr("`%s/%s`failed with: %s", module.Name(), function, resp.Error.Message)
-	}
-
 	return resp.Rets, nil
 }
 

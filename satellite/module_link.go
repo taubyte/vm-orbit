@@ -16,6 +16,7 @@ func (p *moduleLink) MemoryRead(offset uint32, size uint32) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return ret.Data, nil
 }
 

@@ -9,7 +9,9 @@ import (
 	"github.com/taubyte/vm-orbit/satellite"
 )
 
-func hello(ctx context.Context, module satellite.Module, num uint32) uint32 {
+type tester struct{}
+
+func (t *tester) W_hello(ctx context.Context, module satellite.Module, num uint32) uint32 {
 	f, _ := os.Create("/tmp/hello.txt")
 	defer f.Close()
 
@@ -19,17 +21,15 @@ func hello(ctx context.Context, module satellite.Module, num uint32) uint32 {
 	return 0
 }
 
-func sum(a, b int64) int64 {
+func (t *tester) W_sum(a, b int64) int64 {
 	return a + b
 }
 
-func exports() map[string]interface{} {
-	return map[string]interface{}{
-		"hello": hello,
-		"sum":   sum,
-	}
-}
-
 func main() {
-	plugin.Serve("aladdin", exports)
+	exportFunc, err := plugin.Exports(&tester{})
+	if err != nil {
+		panic(err)
+	}
+
+	plugin.Serve("aladdin", exportFunc)
 }

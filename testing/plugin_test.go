@@ -62,7 +62,7 @@ func TestPlugin(t *testing.T) {
 		return
 	}
 
-	plugin, err := orbit.Load("/home/tafkhan/Documents/Work/Taubyte/Repos/vm-orbit/testing/plugin/plugin", "testplugin")
+	plugin, err := orbit.Load("/home/tafkhan/Documents/Work/Taubyte/Repos/vm-orbit/testing/plugin/plugin")
 	if err != nil {
 		t.Error(err)
 		return

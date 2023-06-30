@@ -1,19 +1,26 @@
 package orbit
 
-import "github.com/hashicorp/go-plugin"
+import (
+	"reflect"
 
-var Handshake = plugin.HandshakeConfig{
-	ProtocolVersion:  1,
-	MagicCookieKey:   "EXTERNAL_PLUGIN",
-	MagicCookieValue: "taubyte",
-}
+	"github.com/hashicorp/go-plugin"
+)
 
-var ClientPluginMap = map[string]plugin.Plugin{
-	"satellite": NewLink(),
-	//"modulePlugin": &ModulePlugin{},
-}
+var (
+	// TODO: Move Cookie K/V to specs
+	Handshake = plugin.HandshakeConfig{
+		ProtocolVersion:  1,
+		MagicCookieKey:   "EXTERNAL_PLUGIN",
+		MagicCookieValue: "taubyte",
+	}
 
-var ServerPluginMap = map[string]plugin.Plugin{
-	"satellite": &satellite{},
-	//"modulePlugin": &ModulePlugin{},
-}
+	ClientPluginMap = map[string]plugin.Plugin{
+		"satellite": &link{},
+	}
+
+	ServerPluginMap = map[string]plugin.Plugin{
+		"satellite": &satellite{},
+	}
+
+	moduleType = reflect.TypeOf((*Module)(nil)).Elem()
+)

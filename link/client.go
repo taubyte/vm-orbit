@@ -24,12 +24,12 @@ func (c *GRPCPluginClient) Symbols(ctx context.Context) ([]vm.FunctionDefinition
 	for idx, function := range resp.Functions {
 		args, err := typesToBytes(function.Args)
 		if err != nil {
-			return nil, clientErr("getting arg types failed with: %s", err)
+			return nil, clientErr("getting arg types failed with: %w", err)
 		}
 
 		rets, err := typesToBytes(function.Rets)
 		if err != nil {
-			return nil, clientErr("getting return types failed with: %s", err)
+			return nil, clientErr("getting return types failed with: %w", err)
 		}
 
 		funcDefs[idx] = &functionDefinition{function.Name, args, rets}
@@ -39,7 +39,12 @@ func (c *GRPCPluginClient) Symbols(ctx context.Context) ([]vm.FunctionDefinition
 }
 
 func (c *GRPCPluginClient) Meta(ctx context.Context) (*proto.Metadata, error) {
-	return c.client.Meta(ctx, &proto.Empty{})
+	meta, err := c.client.Meta(ctx, &proto.Empty{})
+	if err != nil {
+		return nil, clientErr("meta failed with: %w", err)
+	}
+
+	return meta, nil
 }
 
 func (c *GRPCPluginClient) Call(ctx context.Context, module vm.Module, function string, inputs []uint64) ([]uint64, error) {
@@ -72,7 +77,7 @@ func (c *GRPCPluginClient) Call(ctx context.Context, module vm.Module, function 
 			return nil, clientErr("`%s/%s` failed with code: %d", module.Name(), function, *resp.Error.Code)
 		}
 
-		return nil, fmt.Errorf("`%s/%s`failed with: %s", module.Name(), function, resp.Error.Message)
+		return nil, clientErr("`%s/%s`failed with: %s", module.Name(), function, resp.Error.Message)
 	}
 
 	return resp.Rets, nil

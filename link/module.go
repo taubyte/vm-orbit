@@ -15,7 +15,7 @@ func NewModule(mod vm.Module) proto.ModuleServer {
 func (m *module) MemoryRead(ctx context.Context, req *proto.ReadRequest) (*proto.ReadReturn, error) {
 	data, ok := m.module.Memory().Read(req.Offset, req.Size)
 	if !ok {
-		return nil, errors.New("bitch")
+		return nil, errors.New("reading (vm) memory failed")
 	}
 
 	return &proto.ReadReturn{Data: data}, nil
@@ -24,7 +24,7 @@ func (m *module) MemoryRead(ctx context.Context, req *proto.ReadRequest) (*proto
 func (m *module) MemoryWrite(ctx context.Context, req *proto.WriteRequest) (*proto.WriteReturn, error) {
 	ok := m.module.Memory().Write(req.Offset, req.Data)
 	if !ok {
-		return nil, errors.New("bitch")
+		return nil, errors.New("writing to (vm) memory failed")
 	}
 
 	return &proto.WriteReturn{Written: uint32(len(req.Data))}, nil

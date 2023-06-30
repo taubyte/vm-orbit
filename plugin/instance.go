@@ -11,30 +11,31 @@ import (
 func (p *pluginInstance) Load(hm vm.HostModule) (vm.ModuleInstance, error) {
 	defs, err := p.satellite.Symbols(p.instance.Context().Context())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting (satellite) symbols failed with: %w", err)
 	}
 
-	for _, def := range defs {
-		h, err := p.convertToHandler(def)
-		if err != nil {
-			return nil, err
-		}
-		hm.Functions(&vm.HostModuleFunctionDefinition{
+	funcDefs := make([]*vm.HostModuleFunctionDefinition, len(defs))
+	for idx, def := range defs {
+		funcDefs[idx] = &vm.HostModuleFunctionDefinition{
 			Name:    def.Name(),
-			Handler: h,
-		})
+			Handler: p.convertToHandler(def),
+		}
 	}
 
+	hm.Functions(funcDefs...)
 	return hm.Compile()
 }
 
-func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) (interface{}, error) {
+func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) interface{} {
 	in := bytesToReflect(def.ParamTypes(), []reflect.Type{vm.ContextType, vm.ModuleType})
-	outRaw := def.ResultTypes()
-	out := bytesToReflect(outRaw, nil)
+	out := bytesToReflect(def.ResultTypes(), nil)
 
-	_func := reflect.MakeFunc(
-		reflect.FuncOf(in, out, false),
+	return p.makeFunc(in, out, def).Interface()
+}
+
+func (p *pluginInstance) makeFunc(paramTypes []reflect.Type, retTypes []reflect.Type, def vm.FunctionDefinition) reflect.Value {
+	return reflect.MakeFunc(
+		reflect.FuncOf(paramTypes, retTypes, false),
 		func(args []reflect.Value) []reflect.Value {
 			if len(args) < 2 {
 				panic("invalid function argument count, expected minimum 2")
@@ -63,18 +64,16 @@ func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) (interface{
 
 			_out := make([]reflect.Value, len(cOut))
 			for idx := 0; idx < len(cOut); idx++ {
-				switch outRaw[idx] {
-				case vm.ValueTypeI32:
+				switch retTypes[idx] {
+				case vm.I32Type:
 					_out[idx] = reflect.ValueOf(int32(cOut[idx]))
-				case vm.ValueTypeI64:
+				case vm.I64Type:
 					_out[idx] = reflect.ValueOf(int64(cOut[idx]))
 				}
 			}
 
 			return _out
 		})
-
-	return _func.Interface(), nil
 }
 
 func (p *pluginInstance) Close() error {

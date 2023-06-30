@@ -1,4 +1,4 @@
-package orbit
+package common
 
 import (
 	"context"
@@ -6,6 +6,14 @@ import (
 	"github.com/taubyte/go-interfaces/vm"
 	"github.com/taubyte/vm-orbit/proto"
 )
+
+var _ vm.FunctionDefinition = &functionDefinition{}
+
+type functionDefinition struct {
+	name string
+	args []vm.ValueType
+	rets []vm.ValueType
+}
 
 type Satellite interface {
 	Meta(context.Context) (*proto.Metadata, error)

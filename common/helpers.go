@@ -1,4 +1,4 @@
-package orbit
+package common
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"github.com/taubyte/vm-orbit/proto"
 )
 
-func typesToBytes(valueTypes []proto.Type) ([]vm.ValueType, error) {
+func TypesToBytes(valueTypes []proto.Type) ([]vm.ValueType, error) {
 	types := make([]vm.ValueType, len(valueTypes))
 	for idx, vt := range valueTypes {
 		switch vm.ValueType(vt) {
@@ -22,7 +22,7 @@ func typesToBytes(valueTypes []proto.Type) ([]vm.ValueType, error) {
 	return types, nil
 }
 
-func byteTypesToReflect(raw []vm.ValueType, defaults []reflect.Type) []reflect.Type {
+func ByteTypesToReflect(raw []vm.ValueType, defaults []reflect.Type) []reflect.Type {
 	types := make([]reflect.Type, 0, len(defaults)+len(raw))
 	types = append(types, defaults...)
 

@@ -1,0 +1,21 @@
+package link
+
+import (
+	"github.com/hashicorp/go-plugin"
+	"github.com/taubyte/go-interfaces/vm"
+	"github.com/taubyte/vm-orbit/proto"
+)
+
+type link struct {
+	plugin.NetRPCUnsupportedPlugin
+}
+
+type GRPCPluginClient struct {
+	broker *plugin.GRPCBroker
+	client proto.PluginClient
+}
+
+type module struct {
+	proto.UnimplementedModuleServer
+	module vm.Module
+}

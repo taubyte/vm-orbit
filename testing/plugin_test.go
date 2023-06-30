@@ -8,7 +8,7 @@ import (
 	"github.com/taubyte/go-interfaces/services/tns/mocks"
 	"github.com/taubyte/go-interfaces/vm"
 	"github.com/taubyte/utils/id"
-	orbit "github.com/taubyte/vm-orbit"
+	"github.com/taubyte/vm-orbit/plugin"
 
 	fileBE "github.com/taubyte/vm/backend/file"
 	"github.com/taubyte/vm/context"
@@ -62,7 +62,7 @@ func TestPlugin(t *testing.T) {
 		return
 	}
 
-	plugin, err := orbit.Load("/home/tafkhan/Documents/Work/Taubyte/Repos/vm-orbit/testing/plugin/plugin")
+	plugin, err := plugin.Load("/home/tafkhan/Documents/Work/Taubyte/Repos/vm-orbit/testing/plugin/plugin")
 	if err != nil {
 		t.Error(err)
 		return

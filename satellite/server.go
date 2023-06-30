@@ -1,4 +1,4 @@
-package orbit
+package satellite
 
 import (
 	"context"
@@ -7,19 +7,10 @@ import (
 	"math"
 	"reflect"
 
-	"github.com/hashicorp/go-plugin"
 	"github.com/taubyte/go-interfaces/vm"
+	"github.com/taubyte/vm-orbit/common"
 	"github.com/taubyte/vm-orbit/proto"
-	"google.golang.org/grpc"
 )
-
-// this is used by the plugin process to provide GRPC for GRPCPluginClient (main process)
-type GRPCPluginServer struct {
-	broker *plugin.GRPCBroker
-	proto.UnimplementedPluginServer
-
-	satellite *satellite
-}
 
 func (p *GRPCPluginServer) Symbols(context.Context, *proto.Empty) (*proto.FunctionDefinitions, error) {
 	ret := &proto.FunctionDefinitions{
@@ -33,7 +24,7 @@ func (p *GRPCPluginServer) Symbols(context.Context, *proto.Empty) (*proto.Functi
 
 		argsType := make([]proto.Type, 0, fx.NumIn())
 		for i := 0; i < fx.NumIn(); i++ {
-			if (i == 0 && fx.In(i).Implements(vm.ContextType)) || (i == 1 && fx.In(i).Implements(moduleType)) {
+			if (i == 0 && fx.In(i).Implements(vm.ContextType)) || (i == 1 && fx.In(i).Implements(common.ModuleType)) {
 				continue
 			}
 			switch fx.In(i).Kind() {
@@ -101,7 +92,7 @@ func (p *GRPCPluginServer) Call(ctx context.Context, req *proto.CallRequest) (*p
 		in = append(in, reflect.ValueOf(ctx))
 	}
 
-	if tfx.NumIn() >= 2 && tfx.In(1) == moduleType {
+	if tfx.NumIn() >= 2 && tfx.In(1) == common.ModuleType {
 		in = append(in, reflect.ValueOf(mod))
 	}
 
@@ -142,33 +133,4 @@ func (p *GRPCPluginServer) Call(ctx context.Context, req *proto.CallRequest) (*p
 	return &proto.CallReturn{
 		Rets: ret,
 	}, nil
-}
-
-type moduleLink struct {
-	plugin.NetRPCUnsupportedPlugin
-	ctx    context.Context
-	client proto.ModuleClient
-}
-
-func NewModuleLink(ctx context.Context, conn *grpc.ClientConn) Module {
-	return &moduleLink{ctx: ctx, client: proto.NewModuleClient(conn)}
-}
-
-func (p *moduleLink) MemoryRead(offset uint32, size uint32) ([]byte, error) {
-	ret, err := p.client.MemoryRead(p.ctx, &proto.ReadRequest{Offset: offset, Size: size})
-	if err != nil {
-		return nil, err
-	}
-	return ret.Data, nil
-}
-
-func (p *moduleLink) MemoryWrite(offset uint32, data []byte) (uint32, error) {
-	ret, err := p.client.MemoryWrite(p.ctx, &proto.WriteRequest{Offset: offset, Data: data})
-	if err != nil {
-		return 0, err
-	}
-	if ret.Error != proto.IOError_none && ret.Error != proto.IOError_eof {
-		return 0, ret.Error.Error()
-	}
-	return uint32(len(data)), ret.Error.Error()
 }

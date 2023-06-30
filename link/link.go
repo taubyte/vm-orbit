@@ -1,4 +1,4 @@
-package orbit
+package link
 
 import (
 	"context"
@@ -8,14 +8,6 @@ import (
 	"github.com/taubyte/vm-orbit/proto"
 	"google.golang.org/grpc"
 )
-
-type link struct {
-	plugin.NetRPCUnsupportedPlugin
-}
-
-func NewLink() plugin.Plugin {
-	return &link{}
-}
 
 func (p *link) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
 	return errors.New("can't create a satellite (link server) from main process")

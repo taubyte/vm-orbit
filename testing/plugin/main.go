@@ -6,10 +6,11 @@ import (
 	"os"
 
 	"github.com/hashicorp/go-plugin"
-	orbit "github.com/taubyte/vm-orbit"
+	"github.com/taubyte/vm-orbit/common"
+	"github.com/taubyte/vm-orbit/satellite"
 )
 
-func hello(ctx context.Context, module orbit.Module, num uint32) uint32 {
+func hello(ctx context.Context, module common.Module, num uint32) uint32 {
 	f, _ := os.Create("/tmp/hello.txt")
 	defer f.Close()
 
@@ -32,9 +33,9 @@ func exports() map[string]interface{} {
 
 func main() {
 	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: orbit.Handshake,
+		HandshakeConfig: common.Handshake,
 		Plugins: map[string]plugin.Plugin{
-			"satellite": orbit.NewSatellite(
+			"satellite": satellite.New(
 				"aladdin",
 				exports,
 			),

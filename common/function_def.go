@@ -1,13 +1,13 @@
-package orbit
+package common
 
 import "github.com/taubyte/go-interfaces/vm"
 
-var _ vm.FunctionDefinition = &functionDefinition{}
-
-type functionDefinition struct {
-	name string
-	args []vm.ValueType
-	rets []vm.ValueType
+func NewFuncDefinition(name string, args []vm.ValueType, rets []vm.ValueType) vm.FunctionDefinition {
+	return &functionDefinition{
+		name: name,
+		args: args,
+		rets: rets,
+	}
 }
 
 func (f *functionDefinition) Name() string {

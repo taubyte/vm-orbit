@@ -1,4 +1,4 @@
-package orbit
+package plugin
 
 import (
 	"context"
@@ -6,13 +6,8 @@ import (
 	"reflect"
 
 	"github.com/taubyte/go-interfaces/vm"
+	"github.com/taubyte/vm-orbit/common"
 )
-
-type pluginInstance struct {
-	plugin   *vmPlugin
-	instance vm.Instance
-	iface    Satellite
-}
 
 func (p *pluginInstance) Load(hm vm.HostModule) (vm.ModuleInstance, error) {
 	defs, err := p.iface.Symbols(p.instance.Context().Context())
@@ -35,9 +30,9 @@ func (p *pluginInstance) Load(hm vm.HostModule) (vm.ModuleInstance, error) {
 }
 
 func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) (interface{}, error) {
-	in := byteTypesToReflect(def.ParamTypes(), []reflect.Type{vm.ContextType, vm.ModuleType})
+	in := common.ByteTypesToReflect(def.ParamTypes(), []reflect.Type{vm.ContextType, vm.ModuleType})
 	outRaw := def.ResultTypes()
-	out := byteTypesToReflect(outRaw, nil)
+	out := common.ByteTypesToReflect(outRaw, nil)
 
 	_func := reflect.MakeFunc(
 		reflect.FuncOf(in, out, false),
@@ -64,7 +59,7 @@ func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) (interface{
 
 			cOut, err := p.iface.Call(ctx, module, def.Name(), in)
 			if err != nil {
-				panic(fmt.Sprintf("calling `%s/%s` failed with: %w", module, def.Name(), err))
+				panic(fmt.Sprintf("calling `%s/%s` failed with: %s", module, def.Name(), err))
 			}
 
 			_out := make([]reflect.Value, len(cOut))

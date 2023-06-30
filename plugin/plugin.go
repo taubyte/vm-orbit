@@ -1,4 +1,4 @@
-package orbit
+package plugin
 
 import (
 	"errors"
@@ -6,21 +6,16 @@ import (
 
 	"github.com/hashicorp/go-plugin"
 	"github.com/taubyte/go-interfaces/vm"
+	"github.com/taubyte/vm-orbit/common"
+	"github.com/taubyte/vm-orbit/link"
 )
 
-type vmPlugin struct {
-	client  *plugin.Client
-	address string
-	name    string
-}
-
-// generic string or maddr
+// TODO: Handle ma as multi-address
 func Load(ma string) (vm.Plugin, error) {
-	// ma is multiaddress
 	p := &vmPlugin{address: ma}
 	p.client = plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: Handshake,
-		Plugins:         ClientPluginMap,
+		HandshakeConfig: common.Handshake,
+		Plugins:         link.ClientPluginMap,
 		Cmd:             exec.Command(ma),
 		AllowedProtocols: []plugin.Protocol{
 			plugin.ProtocolGRPC,
@@ -50,7 +45,7 @@ func (p *vmPlugin) New(instance vm.Instance) (vm.PluginInstance, error) {
 		return nil, err
 	}
 
-	pluginClient, ok := raw.(Satellite)
+	pluginClient, ok := raw.(common.Satellite)
 	if !ok {
 		return nil, errors.New("not plugin")
 	}

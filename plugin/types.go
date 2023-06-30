@@ -9,9 +9,9 @@ import (
 )
 
 type pluginInstance struct {
-	plugin   *vmPlugin
-	instance vm.Instance
-	iface    Satellite
+	plugin    *vmPlugin
+	instance  vm.Instance
+	satellite Satellite
 }
 
 type vmPlugin struct {

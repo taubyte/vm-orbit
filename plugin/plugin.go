@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"errors"
+	"fmt"
 	"os/exec"
 
 	"github.com/hashicorp/go-plugin"
@@ -13,7 +14,7 @@ import (
 func Load(ma string) (vm.Plugin, error) {
 	p := &vmPlugin{address: ma}
 	p.client = plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: Handshake,
+		HandshakeConfig: handshake,
 		Plugins:         link.ClientPluginMap,
 		Cmd:             exec.Command(ma),
 		AllowedProtocols: []plugin.Protocol{
@@ -31,7 +32,7 @@ func (p *vmPlugin) Name() string {
 func (p *vmPlugin) New(instance vm.Instance) (vm.PluginInstance, error) {
 	rpcClient, err := p.client.Client()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting rpc protocol client failed with: %w", err)
 	}
 
 	go func() {
@@ -41,25 +42,25 @@ func (p *vmPlugin) New(instance vm.Instance) (vm.PluginInstance, error) {
 
 	raw, err := rpcClient.Dispense("satellite")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting satellite failed with: %w", err)
 	}
 
 	pluginClient, ok := raw.(Satellite)
 	if !ok {
-		return nil, errors.New("not plugin")
+		return nil, errors.New("satellite is not a plugin")
 	}
 
 	meta, err := pluginClient.Meta(instance.Context().Context())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("meta failed with: %w", err)
 	}
 
 	p.name = meta.Name
 
 	pI := &pluginInstance{
-		iface:    pluginClient,
-		plugin:   p,
-		instance: instance,
+		satellite: pluginClient,
+		plugin:    p,
+		instance:  instance,
 	}
 
 	return pI, nil

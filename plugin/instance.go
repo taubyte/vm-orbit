@@ -9,7 +9,7 @@ import (
 )
 
 func (p *pluginInstance) Load(hm vm.HostModule) (vm.ModuleInstance, error) {
-	defs, err := p.iface.Symbols(p.instance.Context().Context())
+	defs, err := p.satellite.Symbols(p.instance.Context().Context())
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) (interface{
 				in = append(in, uint64(args[i].Int()))
 			}
 
-			cOut, err := p.iface.Call(ctx, module, def.Name(), in)
+			cOut, err := p.satellite.Call(ctx, module, def.Name(), in)
 			if err != nil {
 				panic(fmt.Sprintf("calling `%s/%s` failed with: %s", module, def.Name(), err))
 			}

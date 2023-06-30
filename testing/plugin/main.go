@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hashicorp/go-plugin"
-	plug "github.com/taubyte/vm-orbit/plugin"
+	"github.com/taubyte/vm-orbit/plugin"
 	"github.com/taubyte/vm-orbit/satellite"
 )
 
@@ -32,14 +31,5 @@ func exports() map[string]interface{} {
 }
 
 func main() {
-	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: plug.Handshake,
-		Plugins: map[string]plugin.Plugin{
-			"satellite": satellite.New(
-				"aladdin",
-				exports,
-			),
-		},
-		GRPCServer: plugin.DefaultGRPCServer,
-	})
+	plugin.Serve("aladdin", exports)
 }

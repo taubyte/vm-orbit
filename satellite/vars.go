@@ -1,6 +1,7 @@
 package satellite
 
 import (
+	"errors"
 	"reflect"
 
 	"github.com/hashicorp/go-plugin"
@@ -12,4 +13,6 @@ var (
 	}
 
 	moduleType = reflect.TypeOf((*Module)(nil)).Elem()
+
+	ErrorLinkClient = errors.New("can't create a link (satellite client) from main process")
 )

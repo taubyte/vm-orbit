@@ -2,7 +2,6 @@ package satellite
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -21,35 +20,14 @@ func (p *GRPCPluginServer) Symbols(context.Context, *proto.Empty) (*proto.Functi
 			return nil, fmt.Errorf("handler %s for not a function", name)
 		}
 
-		argsType := make([]proto.Type, 0, fx.NumIn())
-		for i := 0; i < fx.NumIn(); i++ {
-			if (i == 0 && fx.In(i).Implements(vm.ContextType)) || (i == 1 && fx.In(i).Implements(moduleType)) {
-				continue
-			}
-			switch fx.In(i).Kind() {
-			case reflect.Int32, reflect.Uint32:
-				argsType = append(argsType, proto.Type_i32)
-			case reflect.Int64, reflect.Uint64:
-				argsType = append(argsType, proto.Type_i64)
-			case reflect.Float32:
-				argsType = append(argsType, proto.Type_f32)
-			case reflect.Float64:
-				argsType = append(argsType, proto.Type_f64)
-			}
+		argsType, err := parseSignatureValues(fx, in)
+		if err != nil {
+			return nil, fmt.Errorf("parsing argument types failed with: %w", err)
 		}
 
-		retTypes := make([]proto.Type, 0, fx.NumOut())
-		for i := 0; i < fx.NumOut(); i++ {
-			switch fx.Out(i).Kind() {
-			case reflect.Int32, reflect.Uint32:
-				retTypes = append(retTypes, proto.Type_i32)
-			case reflect.Int64, reflect.Uint64:
-				retTypes = append(retTypes, proto.Type_i64)
-			case reflect.Float32:
-				retTypes = append(retTypes, proto.Type_f32)
-			case reflect.Float64:
-				retTypes = append(retTypes, proto.Type_f64)
-			}
+		retTypes, err := parseSignatureValues(fx, out)
+		if err != nil {
+			return nil, fmt.Errorf("parsing return types failed with: %w", err)
 		}
 
 		ret.Functions = append(ret.Functions, &proto.FunctionDefinition{
@@ -71,7 +49,7 @@ func (p *GRPCPluginServer) Meta(context.Context, *proto.Empty) (*proto.Metadata,
 func (p *GRPCPluginServer) Call(ctx context.Context, req *proto.CallRequest) (*proto.CallReturn, error) {
 	conn, err := p.broker.Dial(req.Broker)
 	if err != nil {
-		return nil, fmt.Errorf("dialing plugin server broker failed with: %w", err)
+		return nil, fmt.Errorf("dialing broker failed with: %w", err)
 	}
 
 	defer conn.Close()
@@ -80,7 +58,7 @@ func (p *GRPCPluginServer) Call(ctx context.Context, req *proto.CallRequest) (*p
 
 	handler, ok := p.satellite.exports[req.Function]
 	if !ok {
-		return nil, errors.New("bitch")
+		return nil, fmt.Errorf("function `%s` is not exported", req.Function)
 	}
 
 	fx := reflect.ValueOf(handler)
@@ -107,12 +85,14 @@ func (p *GRPCPluginServer) Call(ctx context.Context, req *proto.CallRequest) (*p
 		case reflect.Uint64:
 			rv = reflect.ValueOf(uint64(v))
 		default:
-			return nil, fmt.Errorf("---------------")
+			return nil, fmt.Errorf("invalid input type %#v", tfx.In(len(in)).Kind())
 		}
 		in = append(in, rv)
 	}
 
 	out := fx.Call(in)
+
+	// TODO: This logic is very similar to the golangToWasm method in VM
 	ret := make([]uint64, len(out))
 	for i, _arg := range out {
 		switch _arg.Kind() {

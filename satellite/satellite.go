@@ -2,7 +2,6 @@ package satellite
 
 import (
 	"context"
-	"errors"
 
 	"github.com/hashicorp/go-plugin"
 	"github.com/taubyte/vm-orbit/proto"
@@ -19,5 +18,5 @@ func (st *satellite) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error
 }
 
 func (p *satellite) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
-	return nil, errors.New("can't create a link (satellite client) from main process")
+	return nil, ErrorLinkClient
 }

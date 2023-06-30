@@ -49,10 +49,8 @@ func (p *vmPlugin) New(instance vm.Instance) (vm.PluginInstance, error) {
 	}
 
 	go func() {
-		select {
-		case <-instance.Context().Context().Done():
-			rpcClient.Close()
-		}
+		<-instance.Context().Context().Done()
+		rpcClient.Close()
 	}()
 
 	raw, err := rpcClient.Dispense("satellite")
@@ -114,17 +112,11 @@ func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) (interface{
 			_out[idx] = I64Type
 		}
 	}
-	fmt.Println("NAME:::", def.Name())
-	fmt.Printf("IN:: %#v\n", _in)
-	fmt.Printf("OUT:: %#v\n", _out)
 
 	_func := reflect.MakeFunc(
 		reflect.FuncOf(_in, _out, false),
 		func(args []reflect.Value) []reflect.Value {
-			fmt.Println("START")
-			defer fmt.Println("DONE")
 			if len(args) < 2 {
-				fmt.Println(1)
 				panic("")
 			}
 

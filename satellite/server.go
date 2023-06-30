@@ -2,7 +2,6 @@ package satellite
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"reflect"
 
@@ -17,17 +16,17 @@ func (p *GRPCPluginServer) Symbols(context.Context, *proto.Empty) (*proto.Functi
 	for name, handler := range p.satellite.exports {
 		fx := reflect.TypeOf(handler)
 		if fx.Kind() != reflect.Func {
-			return nil, fmt.Errorf("handler %s for not a function", name)
+			return nil, serverError("handler %s for not a function", name)
 		}
 
 		argsType, err := parseSignatureValues(fx, in)
 		if err != nil {
-			return nil, fmt.Errorf("parsing argument types failed with: %w", err)
+			return nil, serverError("parsing argument types failed with: %w", err)
 		}
 
 		retTypes, err := parseSignatureValues(fx, out)
 		if err != nil {
-			return nil, fmt.Errorf("parsing return types failed with: %w", err)
+			return nil, serverError("parsing return types failed with: %w", err)
 		}
 
 		ret.Functions = append(ret.Functions, &proto.FunctionDefinition{
@@ -49,7 +48,7 @@ func (p *GRPCPluginServer) Meta(context.Context, *proto.Empty) (*proto.Metadata,
 func (p *GRPCPluginServer) Call(ctx context.Context, req *proto.CallRequest) (*proto.CallReturn, error) {
 	conn, err := p.broker.Dial(req.Broker)
 	if err != nil {
-		return nil, fmt.Errorf("dialing broker failed with: %w", err)
+		return nil, serverError("dialing broker failed with: %w", err)
 	}
 
 	defer conn.Close()
@@ -58,7 +57,7 @@ func (p *GRPCPluginServer) Call(ctx context.Context, req *proto.CallRequest) (*p
 
 	handler, ok := p.satellite.exports[req.Function]
 	if !ok {
-		return nil, fmt.Errorf("function `%s` is not exported", req.Function)
+		return nil, serverError("function `%s` is not exported", req.Function)
 	}
 
 	fx := reflect.ValueOf(handler)
@@ -85,7 +84,7 @@ func (p *GRPCPluginServer) Call(ctx context.Context, req *proto.CallRequest) (*p
 		case reflect.Uint64:
 			rv = reflect.ValueOf(uint64(v))
 		default:
-			return nil, fmt.Errorf("invalid input type %#v", tfx.In(len(in)).Kind())
+			return nil, serverError("invalid input type %#v", tfx.In(len(in)).Kind())
 		}
 		in = append(in, rv)
 	}
@@ -105,7 +104,7 @@ func (p *GRPCPluginServer) Call(ctx context.Context, req *proto.CallRequest) (*p
 		case reflect.Int, reflect.Int32, reflect.Int64:
 			ret[i] = uint64(_arg.Int())
 		default:
-			return nil, fmt.Errorf("failed to process arguments %v of type %T", _arg, _arg)
+			return nil, serverError("failed to process arguments %v of type %T", _arg, _arg)
 		}
 	}
 

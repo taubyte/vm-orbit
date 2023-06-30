@@ -33,6 +33,7 @@ func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) interface{}
 	return p.makeFunc(in, out, def).Interface()
 }
 
+// TODO: Handle Floats
 func (p *pluginInstance) makeFunc(paramTypes []reflect.Type, retTypes []reflect.Type, def vm.FunctionDefinition) reflect.Value {
 	return reflect.MakeFunc(
 		reflect.FuncOf(paramTypes, retTypes, false),
@@ -52,8 +53,6 @@ func (p *pluginInstance) makeFunc(paramTypes []reflect.Type, retTypes []reflect.
 
 			in := make([]uint64, 0, len(args))
 			for i := 2; i < len(args); i++ {
-				// TODO: double check uint64(int64) makes just a type conversion
-				// This will not work for Float
 				in = append(in, uint64(args[i].Int()))
 			}
 

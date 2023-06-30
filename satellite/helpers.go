@@ -2,6 +2,7 @@ package satellite
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/taubyte/go-interfaces/vm"
@@ -50,4 +51,8 @@ func parseSignatureValues(fx reflect.Type, parseType signatureParseType) ([]prot
 	}
 
 	return types, nil
+}
+
+func serverError(format string, args ...interface{}) error {
+	return fmt.Errorf("[server] "+format, args...)
 }

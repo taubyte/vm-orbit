@@ -26,10 +26,5 @@ func (t *tester) W_sum(a, b int64) int64 {
 }
 
 func main() {
-	exportFunc, err := plugin.Exports(&tester{})
-	if err != nil {
-		panic(err)
-	}
-
-	plugin.Serve("aladdin", exportFunc)
+	plugin.Serve("aladdin", &tester{})
 }

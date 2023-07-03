@@ -1,11 +1,10 @@
-package testing
+package testing_test
 
 import (
 	goCTX "context"
-	"fmt"
-	"io"
 	"os"
 	"path"
+	"sync"
 	"testing"
 
 	"github.com/taubyte/go-interfaces/services/tns/mocks"
@@ -23,6 +22,79 @@ import (
 )
 
 func TestPlugin(t *testing.T) {
+	instance, ctx, err := newVM()
+	assert.NilError(t, err)
+
+	rt, err := instance.Runtime(nil)
+	assert.NilError(t, err)
+
+	wasmFile, plugin := plugin(t, ctx)
+	defer plugin.Close()
+
+	checkCall(t, ctx, wasmFile, rt, plugin, 5)
+}
+
+func TestConcurrentPlugin(t *testing.T) {
+	instance, ctx, err := newVM()
+	assert.NilError(t, err)
+
+	runtimeCount := 1
+	runtimes := make([]vm.Runtime, runtimeCount)
+
+	for i := 0; i < runtimeCount; i++ {
+		runtimes[i], err = instance.Runtime(nil)
+		assert.NilError(t, err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(runtimeCount)
+	wasmFile, plugin := plugin(t, ctx)
+	defer plugin.Close()
+
+	for i := 0; i < runtimeCount; i++ {
+		go func(idx int) {
+			defer wg.Done()
+			rt := runtimes[idx]
+			checkCall(t, ctx, wasmFile, rt, plugin, uint32(idx))
+		}(i)
+	}
+
+	wg.Wait()
+}
+
+func plugin(t *testing.T, ctx goCTX.Context) (wasmFile string, plugin vm.Plugin) {
+	wd, err := os.Getwd()
+	assert.NilError(t, err)
+
+	pluginBinary := path.Join(wd, "plugin", "plugin")
+	wasmFile = path.Join(wd, "plugin", "wasm", "main.wasm")
+	plugin, err = vmPlugin.Load(pluginBinary, ctx)
+	assert.NilError(t, err)
+
+	return
+}
+
+func checkCall(t *testing.T, ctx goCTX.Context, wasmFile string, rt vm.Runtime, plugin vm.Plugin, callVal uint32) {
+	_, _, err := rt.Attach(plugin)
+	assert.NilError(t, err)
+
+	mod, err := rt.Module("/file/" + wasmFile)
+	assert.NilError(t, err)
+
+	fi, err := mod.Function("ping")
+	assert.NilError(t, err)
+
+	ret := fi.Call(ctx, callVal)
+	assert.NilError(t, ret.Error())
+
+	var output uint32
+	err = ret.Reflect(&output)
+	assert.NilError(t, err)
+
+	assert.Equal(t, output, callVal+42)
+}
+
+func newVM() (vm.Instance, goCTX.Context, error) {
 	tns := mocks.New()
 	rslver := resolver.New(tns)
 	ldr := loader.New(rslver, fileBE.New())
@@ -46,44 +118,14 @@ func TestPlugin(t *testing.T) {
 		context.Branch(mocksConfig.Branch),
 		context.Commit(mocksConfig.Commit),
 	)
-	assert.NilError(t, err)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	instance, err := vmService.New(_ctx, vm.Config{})
-	assert.NilError(t, err)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	rt, err := instance.Runtime(nil)
-	assert.NilError(t, err)
-
-	wd, err := os.Getwd()
-	assert.NilError(t, err)
-
-	pluginBinary := path.Join(wd, "plugin", "plugin")
-	plugin, err := vmPlugin.Load(pluginBinary, ctx)
-	assert.NilError(t, err)
-
-	_, _, err = rt.Attach(plugin)
-	assert.NilError(t, err)
-
-	wasmFile := path.Join(wd, "main.wasm")
-	mod, err := rt.Module("/file/" + wasmFile)
-	assert.NilError(t, err)
-
-	fi, err := mod.Function("ping")
-	assert.NilError(t, err)
-
-	ret := fi.Call(ctx)
-	defer os.Remove("/tmp/hello.txt")
-	assert.NilError(t, ret.Error())
-	fmt.Println(ret.Error())
-
-	file, err := os.Open("/tmp/hello.txt")
-	defer file.Close()
-	assert.NilError(t, err)
-
-	data, err := io.ReadAll(file)
-	assert.NilError(t, err)
-	fmt.Println(string(data))
-
-	assert.DeepEqual(t, string(data), "The answer is: 2\n")
-
+	return instance, ctx, err
 }

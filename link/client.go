@@ -75,6 +75,10 @@ func (c *GRPCPluginClient) Call(ctx context.Context, module vm.Module, function 
 	return resp.Rets, nil
 }
 
+func (c *GRPCPluginClient) Close() error {
+	return c.broker.Close()
+}
+
 func typesToBytes(valueTypes []proto.Type) ([]vm.ValueType, error) {
 	types := make([]vm.ValueType, len(valueTypes))
 	for idx, vt := range valueTypes {

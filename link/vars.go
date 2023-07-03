@@ -8,7 +8,7 @@ import (
 
 var (
 	ClientPluginMap = map[string]plugin.Plugin{
-		"satellite": New(),
+		"satellite": &link{},
 	}
 
 	ErrorLinkServer = errors.New("can't create a satellite (link server) from main process")

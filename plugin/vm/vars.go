@@ -7,7 +7,7 @@ import (
 func HandShake() plugin.HandshakeConfig {
 	return plugin.HandshakeConfig{
 		ProtocolVersion:  1,
-		MagicCookieKey:   "VM_ORBIT_SATELITE",
+		MagicCookieKey:   "VM_ORBIT_SATELLITE",
 		MagicCookieValue: "taubyte",
 	}
 }

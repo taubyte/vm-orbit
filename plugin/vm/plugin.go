@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 
 	"github.com/fsnotify/fsnotify"
@@ -33,10 +34,9 @@ func (p *vmPlugin) connect() (err error) {
 	return
 }
 
-func (p *vmPlugin) reconnect() {
+func (p *vmPlugin) reconnect() error {
 	p.proc.Kill()
-
-	p.connect()
+	return p.connect()
 }
 
 func (p *vmPlugin) watch() error {
@@ -54,7 +54,9 @@ func (p *vmPlugin) watch() error {
 			case event := <-watcher.Events:
 				log.Println("event:", event)
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					p.reload()
+					if err := p.reload(); err != nil {
+						panic(err)
+					}
 				}
 			case err := <-watcher.Errors:
 				log.Println("error:", err)
@@ -73,21 +75,26 @@ func (p *vmPlugin) watch() error {
 }
 
 // TODO: Handle ma as multi-address
-func Load(filename string) (vm.Plugin, error) {
-	if filename == "" {
-		return nil, errors.New("cannot load plugin from empty multi-address")
+func Load(filename string, ctx context.Context) (vm.Plugin, error) {
+	if len(filename) < 1 {
+		return nil, errors.New("cannot load plugin from empty filename")
+	}
+
+	if _, err := os.Stat(filename); err != nil {
+		return nil, fmt.Errorf("stat `%s` failed with: %w", filename, err)
 	}
 
 	p := &vmPlugin{
 		filename:  filename,
 		instances: make(map[*pluginInstance]interface{}),
 	}
-	p.ctx, p.ctxC = context.WithCancel(context.Background())
+	p.ctx, p.ctxC = context.WithCancel(ctx)
 
 	p.connect()
 	err := p.watch()
 	if err != nil {
-		return nil, err
+		p.ctxC()
+		return nil, fmt.Errorf("watch on file `%s` failed with: %w", filename, err)
 	}
 
 	return p, nil
@@ -102,13 +109,19 @@ func (p *vmPlugin) reload() error {
 	defer p.lock.Unlock()
 
 	for pI := range p.instances {
-		pI.cleanup()
+		if err := pI.cleanup(); err != nil {
+			return fmt.Errorf("cleanup plugin `%s` failed with: %w", p.name, err)
+		}
 	}
 
-	p.reconnect()
+	if err := p.reconnect(); err != nil {
+		return fmt.Errorf("reconnecting plugin `%s` failed with: %w", p.name, err)
+	}
 
 	for pI := range p.instances {
-		pI.reload()
+		if err := pI.reload(); err != nil {
+			return fmt.Errorf("reloading plugin `%s` failed with:%w", p.name, err)
+		}
 	}
 
 	return nil
@@ -131,12 +144,12 @@ func (p *vmPlugin) new(instance vm.Instance) (*pluginInstance, error) {
 	p.lock.RLock()
 	defer p.lock.RUnlock()
 
-	var err error
 	pI := &pluginInstance{
 		plugin:   p,
 		instance: instance,
 	}
 
+	var err error
 	if pI.satellite, err = p.getLink(); err != nil {
 		return nil, fmt.Errorf("getting link to satelite failed with: %w", err)
 	}
@@ -146,7 +159,7 @@ func (p *vmPlugin) new(instance vm.Instance) (*pluginInstance, error) {
 		return nil, fmt.Errorf("meta failed with: %w", err)
 	}
 
-	if p.name == "" {
+	if len(p.name) < 1 {
 		p.name = meta.Name
 	}
 
@@ -154,10 +167,9 @@ func (p *vmPlugin) new(instance vm.Instance) (*pluginInstance, error) {
 }
 
 func (p *vmPlugin) New(instance vm.Instance) (vm.PluginInstance, error) {
-
 	pI, err := p.new(instance)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating new plugin instance for plugin `%s` failed with: %w", p.name, err)
 	}
 
 	p.lock.Lock()
@@ -170,12 +182,14 @@ func (p *vmPlugin) New(instance vm.Instance) (vm.PluginInstance, error) {
 func (p *vmPlugin) Close() error {
 	p.lock.Lock()
 	defer p.lock.Unlock()
-
+	var err error
 	for pI := range p.instances {
-		pI.close()
+		if _err := pI.close(); _err != nil {
+			err = _err
+		}
 	}
 
 	p.ctxC()
 	p.proc.Kill()
-	return nil
+	return err
 }

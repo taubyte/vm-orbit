@@ -9,9 +9,8 @@ import (
 	"github.com/taubyte/go-interfaces/vm"
 )
 
-func (p *pluginInstance) cleanup() (err error) {
-	p.satellite.Close()
-	return
+func (p *pluginInstance) cleanup() error {
+	return p.satellite.Close()
 }
 
 func (p *pluginInstance) reload() (err error) {

@@ -3,6 +3,7 @@ module github.com/taubyte/vm-orbit
 go 1.19
 
 require (
+	github.com/fsnotify/fsnotify v1.6.0
 	github.com/hashicorp/go-plugin v1.4.10
 	github.com/taubyte/go-interfaces v0.2.0
 	github.com/taubyte/utils v0.1.6-pre.v2
@@ -11,7 +12,7 @@ require (
 	gotest.tools/v3 v3.4.0
 )
 
-// replace github.com/taubyte/vm => ../vm
+replace github.com/taubyte/vm => ../vm
 
 replace github.com/taubyte/go-interfaces => ../go-interfaces
 

@@ -58,7 +58,7 @@ func TestPlugin(t *testing.T) {
 	assert.NilError(t, err)
 
 	pluginBinary := path.Join(wd, "plugin", "plugin")
-	plugin, err := vmPlugin.Load(pluginBinary)
+	plugin, err := vmPlugin.Load(pluginBinary, ctx)
 	assert.NilError(t, err)
 
 	_, _, err = rt.Attach(plugin)

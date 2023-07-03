@@ -2,7 +2,6 @@ package link
 
 import (
 	"context"
-	"sync"
 
 	"github.com/hashicorp/go-plugin"
 	"github.com/taubyte/vm-orbit/proto"
@@ -14,10 +13,9 @@ func (p *link) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
 }
 
 func (p *link) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
-	initLock := sync.RWMutex{}
 	return &GRPCPluginClient{
 		client: proto.NewPluginClient(c),
 		broker: broker,
-		lock:   &initLock,
+		parent: p,
 	}, nil
 }

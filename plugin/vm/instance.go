@@ -3,12 +3,21 @@ package vm
 import (
 	"context"
 	"fmt"
+	"math"
 	"reflect"
 
 	"github.com/taubyte/go-interfaces/vm"
 )
 
+func (p *pluginInstance) reload() (err error) {
+	p.satellite, err = p.plugin.getLink()
+	return
+}
+
 func (p *pluginInstance) Load(hm vm.HostModule) (vm.ModuleInstance, error) {
+	p.plugin.lock.RLock()
+	defer p.plugin.lock.RUnlock()
+
 	defs, err := p.satellite.Symbols(p.instance.Context().Context())
 	if err != nil {
 		return nil, fmt.Errorf("getting (satellite) symbols failed with: %w", err)
@@ -33,7 +42,6 @@ func (p *pluginInstance) convertToHandler(def vm.FunctionDefinition) interface{}
 	return p.makeFunc(in, out, def).Interface()
 }
 
-// TODO: Handle Floats
 func (p *pluginInstance) makeFunc(paramTypes []reflect.Type, retTypes []reflect.Type, def vm.FunctionDefinition) reflect.Value {
 	return reflect.MakeFunc(
 		reflect.FuncOf(paramTypes, retTypes, false),
@@ -56,6 +64,9 @@ func (p *pluginInstance) makeFunc(paramTypes []reflect.Type, retTypes []reflect.
 				in = append(in, uint64(args[i].Int()))
 			}
 
+			p.plugin.lock.RLock()
+			defer p.plugin.lock.RUnlock()
+
 			cOut, err := p.satellite.Call(ctx, module, def.Name(), in)
 			if err != nil {
 				panic(fmt.Sprintf("calling `%s/%s` failed with: %s", module, def.Name(), err))
@@ -68,6 +79,10 @@ func (p *pluginInstance) makeFunc(paramTypes []reflect.Type, retTypes []reflect.
 					_out[idx] = reflect.ValueOf(int32(cOut[idx]))
 				case vm.I64Type:
 					_out[idx] = reflect.ValueOf(int64(cOut[idx]))
+				case vm.F32Type:
+					_out[idx] = reflect.ValueOf(math.Float32frombits(uint32(cOut[idx])))
+				case vm.I64Type:
+					_out[idx] = reflect.ValueOf(math.Float64frombits(cOut[idx]))
 				}
 			}
 
@@ -76,6 +91,15 @@ func (p *pluginInstance) makeFunc(paramTypes []reflect.Type, retTypes []reflect.
 }
 
 func (p *pluginInstance) Close() error {
+	p.plugin.lock.Lock()
+	defer p.plugin.lock.Unlock()
+	p.close()
+	return nil
+}
+
+func (p *pluginInstance) close() error {
+	delete(p.plugin.instances, p)
+	p.satellite.Close()
 	return nil
 }
 

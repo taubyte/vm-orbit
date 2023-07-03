@@ -2,6 +2,7 @@ package vm
 
 import (
 	"context"
+	"io"
 	"sync"
 
 	"github.com/hashicorp/go-plugin"
@@ -19,12 +20,20 @@ type vmPlugin struct {
 	client  *plugin.Client
 	address string
 	name    string
-	lock    *sync.RWMutex
+
+	lock sync.RWMutex
+
+	instances map[*pluginInstance]interface{}
+
+	ctx  context.Context
+	ctxC context.CancelFunc
 }
 
 type Satellite interface {
+	io.Closer
+
 	Meta(context.Context) (*proto.Metadata, error)
 	Symbols(context.Context) ([]vm.FunctionDefinition, error)
 	Call(ctx context.Context, module vm.Module, function string, inputs []uint64) ([]uint64, error)
-	AttachLock(lock *sync.RWMutex) error
+	Close() error
 }

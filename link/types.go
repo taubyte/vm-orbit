@@ -1,8 +1,6 @@
 package link
 
 import (
-	"sync"
-
 	"github.com/hashicorp/go-plugin"
 	"github.com/taubyte/go-interfaces/vm"
 	"github.com/taubyte/vm-orbit/proto"
@@ -15,8 +13,7 @@ type link struct {
 type GRPCPluginClient struct {
 	broker *plugin.GRPCBroker
 	client proto.PluginClient
-
-	lock *sync.RWMutex
+	parent *link
 }
 
 type module struct {

@@ -26,5 +26,5 @@ func (t *tester) W_sum(a, b int64) int64 {
 }
 
 func main() {
-	plugin.Serve("aladdin", &tester{})
+	plugin.Export("aladdin", &tester{})
 }

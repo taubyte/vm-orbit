@@ -9,11 +9,11 @@ import (
 	"github.com/taubyte/vm-orbit/satellite"
 )
 
-func Serve(moduleName string, structure interface{}) {
-	ServeRaw(moduleName, exports(structure))
+func Export(moduleName string, structure interface{}) {
+	export(moduleName, generateExports(structure))
 }
 
-func ServeRaw(moduleName string, exports func() map[string]interface{}) {
+func export(moduleName string, exports func() map[string]interface{}) {
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: vm.HandShake(),
 		Plugins: map[string]plugin.Plugin{
@@ -23,7 +23,7 @@ func ServeRaw(moduleName string, exports func() map[string]interface{}) {
 	})
 }
 
-func exports(structure interface{}) func() map[string]interface{} {
+func generateExports(structure interface{}) func() map[string]interface{} {
 	m := reflect.ValueOf(structure)
 	mT := reflect.TypeOf(structure)
 

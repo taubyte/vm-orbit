@@ -11,9 +11,9 @@ require (
 	gotest.tools/v3 v3.4.0
 )
 
-replace github.com/taubyte/vm => ../vm
+// replace github.com/taubyte/vm => ../vm
 
-replace github.com/taubyte/go-interfaces => ../go-interfaces
+//replace github.com/taubyte/go-interfaces => ../go-interfaces
 
 require (
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
@@ -136,7 +136,7 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 )
 
-replace github.com/taubyte/go-interfaces => ../go-interfaces
+//replace github.com/taubyte/go-interfaces => ../go-interfaces
 
 require (
 	github.com/fatih/color v1.7.0 // indirect

@@ -15,8 +15,6 @@ func clientErr(msg string, args ...any) error {
 }
 
 func (c *GRPCPluginClient) Symbols(ctx context.Context) ([]vm.FunctionDefinition, error) {
-	c.parent.lock.RLock()
-	defer c.parent.lock.RUnlock()
 	resp, err := c.client.Symbols(ctx, &proto.Empty{})
 	if err != nil {
 		return nil, clientErr("calling symbols failed with: %w", err)
@@ -41,8 +39,6 @@ func (c *GRPCPluginClient) Symbols(ctx context.Context) ([]vm.FunctionDefinition
 }
 
 func (c *GRPCPluginClient) Meta(ctx context.Context) (*proto.Metadata, error) {
-	c.parent.lock.RLock()
-	defer c.parent.lock.RUnlock()
 	meta, err := c.client.Meta(ctx, &proto.Empty{})
 	if err != nil {
 		return nil, clientErr("meta failed with: %w", err)
@@ -52,8 +48,6 @@ func (c *GRPCPluginClient) Meta(ctx context.Context) (*proto.Metadata, error) {
 }
 
 func (c *GRPCPluginClient) Call(ctx context.Context, module vm.Module, function string, inputs []uint64) ([]uint64, error) {
-	c.parent.lock.RLock()
-	defer c.parent.lock.RUnlock()
 	moduleServer := NewModule(module)
 
 	var s *grpc.Server

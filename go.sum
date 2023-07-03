@@ -616,6 +616,8 @@ github.com/taubyte/go-specs v0.10.5-pre h1:w+zwF8mR5oG5tiWZW7N1AE7o8YYVKXDGqSp5m
 github.com/taubyte/go-specs v0.10.5-pre/go.mod h1:HWMNhpmQzy/1Eg6s5TICKl+/talTXLX6jYEUuWCsaGg=
 github.com/taubyte/utils v0.1.6-pre.v2 h1:JqHzR3OcBgAuEq7oAcXMRWPHe4/+3baMO7T+lFP2bt4=
 github.com/taubyte/utils v0.1.6-pre.v2/go.mod h1:jyDYcHBgGb5bcPTzAMVFurLSHesImMMxvFbAT4eCnG0=
+github.com/tetratelabs/wazero v1.0.3 h1:IWmaxc/5vKg71DE+c0SLjjLFAA3u3tD/Zegpgif2Wpo=
+github.com/tetratelabs/wazero v1.0.3/go.mod h1:wYx2gNRg8/WihJfSDxA1TIL8H+GkfLYm+bIfbblu9VQ=
 github.com/ugorji/go v1.1.7 h1:/68gy2h+1mWMrwZFeD1kQialdSzAb432dtpeJ42ovdo=
 github.com/ugorji/go v1.1.7/go.mod h1:kZn38zHttfInRq0xu/PH0az30d+z6vm202qpg1oXVMw=
 github.com/ugorji/go/codec v1.1.7 h1:2SvQaVZ1ouYrrKKwoSk2pzd4A9evlKJb9oTL+OaLUSs=

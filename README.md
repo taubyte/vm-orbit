@@ -24,7 +24,7 @@ go generate ./...
 ## Exported Functions
 * Plugins can be created from structures with method names starting with **W_**
 * The signature parameters can include the following: 
-    * context, module, uint8, uint16, uint32, uint64, int8, int16, int32, int64 
+    * context, module,uint, uint8, uint16, uint32, uint64,int, int8, int16, int32, int64 
         * module is used use for reading and writing to/from module memory
         * though context and module are optional, if used they must be in the first and second parameters, respectfully 
 #### Example
@@ -33,13 +33,25 @@ type tester struct{}
 
 import "github.com/taubyte/vm-orbit/satellite"
 
-func (t *tester) W_hello(ctx context.Context, module satellite.Module, num uint32) uint32 {
-	f, _ := os.Create("/tmp/hello.txt")
-	defer f.Close()
+func (t *tester) W_atoiAdd(ctx context.Context, module satellite.Module, stringPtr uint32, stringLen uint32, addVal int,resPtr uint32) int {
+	data, err := module.MemoryRead(stringPtr, stringLen)
+	if err != nil {
+		return 1
+	}
 
-	fmt.Println(module)
-	fmt.Fprintln(f, "The answer is:", num)
+	parsedVal, err := strconv.Atoi(string(data))
+	if err != nil {
+		return 1
+	}
 
+	sum := parsedVal + addVal
+	sumString := fmt.Sprintf("added sum: %d",sum)
+
+	n, err := module.MemoryWrite(resPtr, []byte(sumString))
+	if err != nil{
+		return 1
+	}
+	
 	return 0
 }
 

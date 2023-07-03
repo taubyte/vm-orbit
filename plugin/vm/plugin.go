@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/hashicorp/go-plugin"
@@ -52,10 +53,9 @@ func (p *vmPlugin) watch() error {
 		for {
 			select {
 			case event := <-watcher.Events:
-				log.Println("event:", event)
-				if event.Op&fsnotify.Write == fsnotify.Write {
+				if event.Name == p.filename && (event.Op&fsnotify.Write == fsnotify.Write || event.Op&fsnotify.Create == fsnotify.Create) {
 					if err := p.reload(); err != nil {
-						panic(err)
+						log.Println(err.Error())
 					}
 				}
 			case err := <-watcher.Errors:
@@ -65,8 +65,9 @@ func (p *vmPlugin) watch() error {
 			}
 		}
 	}()
+	dir := filepath.Dir(p.filename)
 
-	err = watcher.Add(p.filename)
+	err = watcher.Add(dir)
 	if err != nil {
 		return err
 	}
@@ -107,7 +108,6 @@ func (p *vmPlugin) Name() string {
 func (p *vmPlugin) reload() error {
 	p.lock.Lock()
 	defer p.lock.Unlock()
-
 	for pI := range p.instances {
 		if err := pI.cleanup(); err != nil {
 			return fmt.Errorf("cleanup plugin `%s` failed with: %w", p.name, err)

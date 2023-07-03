@@ -3,7 +3,9 @@ package testing_test
 import (
 	goCTX "context"
 	"os"
+	"os/exec"
 	"path"
+	"strings"
 	"sync"
 	"testing"
 
@@ -21,7 +23,12 @@ import (
 	source "github.com/taubyte/vm/sources/taubyte"
 )
 
+var testLock sync.Locker
+
 func TestPlugin(t *testing.T) {
+	err := buildPlugin()
+	assert.NilError(t, err)
+
 	instance, ctx, err := newVM()
 	assert.NilError(t, err)
 
@@ -31,10 +38,15 @@ func TestPlugin(t *testing.T) {
 	wasmFile, plugin := plugin(t, ctx)
 	defer plugin.Close()
 
-	checkCall(t, ctx, wasmFile, rt, plugin, 5)
+	fi := getFunction(t, wasmFile, rt, plugin)
+
+	checkCall(t, ctx, fi, 5, 5+42)
 }
 
 func TestConcurrentPlugin(t *testing.T) {
+	err := buildPlugin()
+	assert.NilError(t, err)
+
 	instance, ctx, err := newVM()
 	assert.NilError(t, err)
 
@@ -55,11 +67,55 @@ func TestConcurrentPlugin(t *testing.T) {
 		go func(idx int) {
 			defer wg.Done()
 			rt := runtimes[idx]
-			checkCall(t, ctx, wasmFile, rt, plugin, uint32(idx))
+			fi := getFunction(t, wasmFile, rt, plugin)
+			checkCall(t, ctx, fi, uint32(idx), uint32(idx)+42)
 		}(i)
 	}
 
 	wg.Wait()
+}
+
+// Cannot be tested in parallel
+func TestUpdatePlugin(t *testing.T) {
+	instance, ctx, err := newVM()
+	assert.NilError(t, err)
+
+	rt, err := instance.Runtime(nil)
+	assert.NilError(t, err)
+
+	wasmFile, plugin := plugin(t, ctx)
+	defer plugin.Close()
+
+	_, _, err = rt.Attach(plugin)
+	assert.NilError(t, err)
+
+	pluginDir := "./plugin"
+	mainFile := path.Join(pluginDir, "main.go")
+	data, err := os.ReadFile(mainFile)
+	assert.NilError(t, err)
+
+	dataString := string(data)
+
+	str := strings.Replace(dataString, "uint32(val) + 42", "uint32(val) + 43", -1)
+
+	err = os.WriteFile(mainFile, []byte(str), 0644)
+	defer func() {
+		os.WriteFile(mainFile, []byte(dataString), 0644)
+		buildPlugin()
+	}()
+
+	assert.NilError(t, err)
+
+	err = buildPlugin()
+	assert.NilError(t, err)
+
+	mod, err := rt.Module("/file/" + wasmFile)
+	assert.NilError(t, err)
+
+	fi, err := mod.Function("ping")
+	assert.NilError(t, err)
+
+	checkCall(t, ctx, fi, 5, 5+43)
 }
 
 func plugin(t *testing.T, ctx goCTX.Context) (wasmFile string, plugin vm.Plugin) {
@@ -74,7 +130,7 @@ func plugin(t *testing.T, ctx goCTX.Context) (wasmFile string, plugin vm.Plugin)
 	return
 }
 
-func checkCall(t *testing.T, ctx goCTX.Context, wasmFile string, rt vm.Runtime, plugin vm.Plugin, callVal uint32) {
+func getFunction(t *testing.T, wasmFile string, rt vm.Runtime, plugin vm.Plugin) vm.FunctionInstance {
 	_, _, err := rt.Attach(plugin)
 	assert.NilError(t, err)
 
@@ -84,14 +140,18 @@ func checkCall(t *testing.T, ctx goCTX.Context, wasmFile string, rt vm.Runtime, 
 	fi, err := mod.Function("ping")
 	assert.NilError(t, err)
 
+	return fi
+}
+
+func checkCall(t *testing.T, ctx goCTX.Context, fi vm.FunctionInstance, callVal uint32, expected uint32) {
 	ret := fi.Call(ctx, callVal)
 	assert.NilError(t, ret.Error())
 
 	var output uint32
-	err = ret.Reflect(&output)
+	err := ret.Reflect(&output)
 	assert.NilError(t, err)
 
-	assert.Equal(t, output, callVal+42)
+	assert.Equal(t, output, expected)
 }
 
 func newVM() (vm.Instance, goCTX.Context, error) {
@@ -128,4 +188,11 @@ func newVM() (vm.Instance, goCTX.Context, error) {
 	}
 
 	return instance, ctx, err
+}
+
+func buildPlugin() error {
+	pluginDir := "./plugin"
+	cmd := exec.Command("go", "build")
+	cmd.Dir = pluginDir
+	return cmd.Run()
 }

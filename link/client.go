@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/taubyte/go-interfaces/vm"
 	"github.com/taubyte/vm-orbit/proto"
@@ -14,7 +15,18 @@ func clientErr(msg string, args ...any) error {
 	return fmt.Errorf("[]client "+msg, args...)
 }
 
+func (c *GRPCPluginClient) AttachLock(lock *sync.RWMutex) error {
+	if lock == nil {
+		return errors.New("cannot attach nil mutex")
+	}
+
+	c.lock = lock
+	return nil
+}
+
 func (c *GRPCPluginClient) Symbols(ctx context.Context) ([]vm.FunctionDefinition, error) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
 	resp, err := c.client.Symbols(ctx, &proto.Empty{})
 	if err != nil {
 		return nil, clientErr("calling symbols failed with: %w", err)
@@ -39,6 +51,8 @@ func (c *GRPCPluginClient) Symbols(ctx context.Context) ([]vm.FunctionDefinition
 }
 
 func (c *GRPCPluginClient) Meta(ctx context.Context) (*proto.Metadata, error) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
 	meta, err := c.client.Meta(ctx, &proto.Empty{})
 	if err != nil {
 		return nil, clientErr("meta failed with: %w", err)
@@ -48,6 +62,8 @@ func (c *GRPCPluginClient) Meta(ctx context.Context) (*proto.Metadata, error) {
 }
 
 func (c *GRPCPluginClient) Call(ctx context.Context, module vm.Module, function string, inputs []uint64) ([]uint64, error) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
 	moduleServer := NewModule(module)
 
 	var s *grpc.Server

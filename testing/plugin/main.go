@@ -16,7 +16,7 @@ func (t *tester) W_hello(ctx context.Context, module satellite.Module, num uint3
 	defer f.Close()
 
 	fmt.Println(module)
-	fmt.Fprintln(f, "The answer is: ", num)
+	fmt.Fprintln(f, "The answer is:", num)
 
 	return 0
 }

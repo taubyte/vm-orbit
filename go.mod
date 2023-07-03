@@ -8,8 +8,11 @@ require (
 	github.com/taubyte/utils v0.1.6-pre.v2
 	google.golang.org/grpc v1.56.1
 	google.golang.org/protobuf v1.30.0
+	gotest.tools/v3 v3.4.0
 )
+
 replace github.com/tetratelabs/wazero => /home/tafkhan/Documents/Work/Taubyte/test/wazero
+
 replace github.com/taubyte/vm => ../vm
 
 require (
@@ -35,6 +38,7 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/mock v1.6.0 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/pprof v0.0.0-20230405160723-4a4c7d95572b // indirect
 	github.com/google/uuid v1.3.0 // indirect

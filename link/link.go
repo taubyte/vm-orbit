@@ -16,6 +16,5 @@ func (p *link) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grp
 	return &GRPCPluginClient{
 		client: proto.NewPluginClient(c),
 		broker: broker,
-		parent: p,
 	}, nil
 }

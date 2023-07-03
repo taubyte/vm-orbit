@@ -13,7 +13,7 @@ require (
 
 // replace github.com/taubyte/vm => ../vm
 
-//replace github.com/taubyte/go-interfaces => ../go-interfaces
+replace github.com/taubyte/go-interfaces => ../go-interfaces
 
 require (
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect

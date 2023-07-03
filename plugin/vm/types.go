@@ -17,9 +17,11 @@ type pluginInstance struct {
 }
 
 type vmPlugin struct {
-	client  *plugin.Client
-	address string
-	name    string
+	proc   *plugin.Client
+	client plugin.ClientProtocol
+
+	filename string
+	name     string
 
 	lock sync.RWMutex
 

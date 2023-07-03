@@ -4,56 +4,108 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os/exec"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/hashicorp/go-plugin"
 	"github.com/taubyte/go-interfaces/vm"
 	"github.com/taubyte/vm-orbit/link"
 )
 
-func connect(p *vmPlugin) *vmPlugin {
-	p.client = plugin.NewClient(
+func (p *vmPlugin) connect() (err error) {
+	p.proc = plugin.NewClient(
 		&plugin.ClientConfig{
 			HandshakeConfig: HandShake(),
 			Plugins:         link.ClientPluginMap,
-			Cmd:             exec.Command(p.address),
+			Cmd:             exec.Command(p.filename),
 			AllowedProtocols: []plugin.Protocol{
 				plugin.ProtocolGRPC,
 			},
 		},
 	)
-	return p
+
+	p.client, err = p.proc.Client()
+	if err != nil {
+		return fmt.Errorf("getting rpc protocol client failed with: %w", err)
+	}
+
+	return
 }
 
-func reconnect(p *vmPlugin) *vmPlugin {
-	p.client.Kill()
-	return connect(p)
+func (p *vmPlugin) reconnect() {
+	p.proc.Kill()
+
+	p.connect()
+}
+
+func (p *vmPlugin) watch() error {
+	// will panic if any error
+	// creates a new file watcher
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		defer watcher.Close()
+		for {
+			select {
+			case event := <-watcher.Events:
+				log.Println("event:", event)
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					p.reload()
+				}
+			case err := <-watcher.Errors:
+				log.Println("error:", err)
+			case <-p.ctx.Done():
+				return
+			}
+		}
+	}()
+
+	err = watcher.Add(p.filename)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // TODO: Handle ma as multi-address
-func Load(ma string) (vm.Plugin, error) {
-	if len(ma) < 1 {
+func Load(filename string) (vm.Plugin, error) {
+	if filename == "" {
 		return nil, errors.New("cannot load plugin from empty multi-address")
 	}
 
 	p := &vmPlugin{
-		address:   ma,
+		filename:  filename,
 		instances: make(map[*pluginInstance]interface{}),
 	}
 	p.ctx, p.ctxC = context.WithCancel(context.Background())
 
-	return connect(p), nil
+	p.connect()
+	err := p.watch()
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
 }
 
 func (p *vmPlugin) Name() string {
 	return p.name
 }
 
-func (p *vmPlugin) Reload() error {
+func (p *vmPlugin) reload() error {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
-	reconnect(p)
+	for pI := range p.instances {
+		pI.cleanup()
+	}
+
+	p.reconnect()
 
 	for pI := range p.instances {
 		pI.reload()
@@ -63,12 +115,7 @@ func (p *vmPlugin) Reload() error {
 }
 
 func (p *vmPlugin) getLink() (sat Satellite, err error) {
-	rpcClient, err := p.client.Client()
-	if err != nil {
-		return nil, fmt.Errorf("getting rpc protocol client failed with: %w", err)
-	}
-
-	raw, err := rpcClient.Dispense("satellite")
+	raw, err := p.client.Dispense("satellite")
 	if err != nil {
 		return nil, fmt.Errorf("getting satellite failed with: %w", err)
 	}
@@ -129,6 +176,6 @@ func (p *vmPlugin) Close() error {
 	}
 
 	p.ctxC()
-	p.client.Kill()
+	p.proc.Kill()
 	return nil
 }

@@ -13,7 +13,6 @@ type link struct {
 type GRPCPluginClient struct {
 	broker *plugin.GRPCBroker
 	client proto.PluginClient
-	parent *link
 }
 
 type module struct {

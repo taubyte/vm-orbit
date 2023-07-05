@@ -5,16 +5,13 @@ go 1.19
 require (
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/hashicorp/go-plugin v1.4.10
-	github.com/taubyte/go-interfaces v0.2.0
+	github.com/taubyte/go-interfaces v0.2.2
 	github.com/taubyte/utils v0.1.6-pre.v2
+	github.com/taubyte/vm v0.2.1
 	google.golang.org/grpc v1.56.1
 	google.golang.org/protobuf v1.30.0
 	gotest.tools/v3 v3.4.0
 )
-
-replace github.com/taubyte/vm => ../vm
-
-replace github.com/taubyte/go-interfaces => ../go-interfaces
 
 require (
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
@@ -137,8 +134,6 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 )
 
-//replace github.com/taubyte/go-interfaces => ../go-interfaces
-
 require (
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -160,7 +155,6 @@ require (
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.9.5 // indirect
-	github.com/taubyte/vm v0.2.0
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect

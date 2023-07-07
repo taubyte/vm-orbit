@@ -85,6 +85,10 @@ func Load(filename string, ctx context.Context) (vm.Plugin, error) {
 		return nil, fmt.Errorf("stat `%s` failed with: %w", filename, err)
 	}
 
+	if err := hashFileContent(filename); err != nil {
+		return nil, fmt.Errorf("hashing %s failed with: %w", filename, err)
+	}
+
 	p := &vmPlugin{
 		filename:  filename,
 		instances: make(map[*pluginInstance]interface{}),
@@ -106,6 +110,10 @@ func (p *vmPlugin) Name() string {
 }
 
 func (p *vmPlugin) reload() error {
+	if err := hashFileContent(p.filename); err != nil {
+		return fmt.Errorf("hashing %s failed with: %w", p.filename, err)
+	}
+
 	p.lock.Lock()
 	defer p.lock.Unlock()
 	for pI := range p.instances {

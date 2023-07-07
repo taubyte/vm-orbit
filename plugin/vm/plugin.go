@@ -110,12 +110,13 @@ func (p *vmPlugin) Name() string {
 }
 
 func (p *vmPlugin) reload() error {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+
 	if err := hashFileContent(p.filename); err != nil {
 		return fmt.Errorf("hashing %s failed with: %w", p.filename, err)
 	}
 
-	p.lock.Lock()
-	defer p.lock.Unlock()
 	for pI := range p.instances {
 		if err := pI.cleanup(); err != nil {
 			return fmt.Errorf("cleanup plugin `%s` failed with: %w", p.name, err)

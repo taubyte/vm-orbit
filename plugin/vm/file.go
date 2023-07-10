@@ -54,9 +54,8 @@ func (v *vmPlugin) hashFile() error {
 		return fmt.Errorf("multi-hashing `%s` failed with: %w", f.Name(), err)
 	}
 
-	err = os.WriteFile(fmt.Sprintf("%s.sha256", v.origin), []byte(mh.B58String()), 0755)
-	if err != nil {
-		return fmt.Errorf("writing to `%s.sha256` failed with: %w", v.origin, err)
+	if err = os.WriteFile(fmt.Sprintf("%s.hash", v.origin), []byte(mh.B58String()), 0644); err != nil {
+		return fmt.Errorf("writing to `%s.hash` failed with: %w", v.origin, err)
 	}
 
 	return nil

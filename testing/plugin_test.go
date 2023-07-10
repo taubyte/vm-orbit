@@ -75,6 +75,9 @@ func TestConcurrentPlugin(t *testing.T) {
 
 // TODO: Use build flags instead
 func TestUpdatePlugin(t *testing.T) {
+	pluginEvents := vmPlugin.Subscribe(t)
+	defer vmPlugin.UnSubscribe(t)
+
 	instance, ctx, err := newVM()
 	assert.NilError(t, err)
 
@@ -107,6 +110,8 @@ func TestUpdatePlugin(t *testing.T) {
 	err = buildPlugin()
 	assert.NilError(t, err)
 
+	// Wait for two checks of waitTillCopy
+	<-pluginEvents
 	mod, err := rt.Module("/file/" + wasmFile)
 	assert.NilError(t, err)
 

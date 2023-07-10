@@ -72,11 +72,8 @@ func (p *vmPlugin) watch() error {
 			select {
 			case event := <-watcher.Events:
 				if event.Name == p.origin && (event.Op&fsnotify.Write == fsnotify.Write || event.Op&fsnotify.Create == fsnotify.Create) {
-					p.lock.Lock()
-
 					if err = p.waitTillCopyIsDone(); err != nil {
 						log.Println("copy done error:" + err.Error())
-						p.lock.Unlock()
 						return
 					}
 
@@ -84,7 +81,7 @@ func (p *vmPlugin) watch() error {
 						log.Println("reload error" + err.Error())
 					}
 
-					p.lock.Unlock()
+					subsHandle(p.origin)
 				}
 			case err := <-watcher.Errors:
 				log.Println("error:", err)
@@ -142,6 +139,9 @@ func (p *vmPlugin) getLink() (sat Satellite, err error) {
 }
 
 func (p *vmPlugin) reload() (err error) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+
 	if err = p.prepFile(); err != nil {
 		return fmt.Errorf("prepping `%s` failed with: %w", p.name, err)
 	}

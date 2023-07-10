@@ -23,8 +23,6 @@ import (
 	source "github.com/taubyte/vm/sources/taubyte"
 )
 
-var testLock sync.Locker
-
 func TestPlugin(t *testing.T) {
 	err := buildPlugin()
 	assert.NilError(t, err)
@@ -75,7 +73,7 @@ func TestConcurrentPlugin(t *testing.T) {
 	wg.Wait()
 }
 
-// Cannot be tested in parallel
+// TODO: Use build flags instead
 func TestUpdatePlugin(t *testing.T) {
 	instance, ctx, err := newVM()
 	assert.NilError(t, err)

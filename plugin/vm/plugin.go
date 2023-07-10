@@ -85,7 +85,8 @@ func Load(filename string, ctx context.Context) (vm.Plugin, error) {
 		return nil, fmt.Errorf("stat `%s` failed with: %w", filename, err)
 	}
 
-	if err := hashFileContent(filename); err != nil {
+	filename, err := prepFile(filename)
+	if err != nil {
 		return nil, fmt.Errorf("hashing %s failed with: %w", filename, err)
 	}
 
@@ -96,8 +97,7 @@ func Load(filename string, ctx context.Context) (vm.Plugin, error) {
 	p.ctx, p.ctxC = context.WithCancel(ctx)
 
 	p.connect()
-	err := p.watch()
-	if err != nil {
+	if err = p.watch(); err != nil {
 		p.ctxC()
 		return nil, fmt.Errorf("watch on file `%s` failed with: %w", filename, err)
 	}
@@ -109,11 +109,11 @@ func (p *vmPlugin) Name() string {
 	return p.name
 }
 
-func (p *vmPlugin) reload() error {
+func (p *vmPlugin) reload() (err error) {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
-	if err := hashFileContent(p.filename); err != nil {
+	if p.filename, err = prepFile(p.filename); err != nil {
 		return fmt.Errorf("hashing %s failed with: %w", p.filename, err)
 	}
 

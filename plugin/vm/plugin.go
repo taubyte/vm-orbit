@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/hashicorp/go-plugin"
@@ -40,6 +41,25 @@ func (p *vmPlugin) reconnect() error {
 	return p.connect()
 }
 
+func (p *vmPlugin) waitTillCopyIsDone() error {
+	var size int64 = -1
+	for {
+		select {
+		case <-time.After(3 * time.Second):
+			info, err := os.Stat(p.origin)
+			if err == nil {
+				if info.Size() != size {
+					size = info.Size()
+				} else {
+					return nil
+				}
+			}
+		case <-p.ctx.Done():
+			return errors.New("Context Done")
+		}
+	}
+}
+
 func (p *vmPlugin) watch() error {
 	// will panic if any error
 	// creates a new file watcher
@@ -53,7 +73,11 @@ func (p *vmPlugin) watch() error {
 		for {
 			select {
 			case event := <-watcher.Events:
-				if event.Name == p.filename && (event.Op&fsnotify.Write == fsnotify.Write || event.Op&fsnotify.Create == fsnotify.Create) {
+				if event.Name == p.origin && (event.Op&fsnotify.Write == fsnotify.Write || event.Op&fsnotify.Create == fsnotify.Create) {
+					if err = p.waitTillCopyIsDone(); err != nil {
+						return
+					}
+
 					if err := p.reload(); err != nil {
 						log.Println(err.Error())
 					}
@@ -65,8 +89,7 @@ func (p *vmPlugin) watch() error {
 			}
 		}
 	}()
-	dir := filepath.Dir(p.filename)
-
+	dir := filepath.Dir(p.origin)
 	err = watcher.Add(dir)
 	if err != nil {
 		return err
@@ -85,21 +108,23 @@ func Load(filename string, ctx context.Context) (vm.Plugin, error) {
 		return nil, fmt.Errorf("stat `%s` failed with: %w", filename, err)
 	}
 
-	filename, err := prepFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("hashing %s failed with: %w", filename, err)
-	}
-
 	p := &vmPlugin{
-		filename:  filename,
+		origin:    filename,
 		instances: make(map[*pluginInstance]interface{}),
 	}
+
+	var err error
+	p.filename, err = prepFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("hashing %s failed with: %w", p.filename, err)
+	}
+
 	p.ctx, p.ctxC = context.WithCancel(ctx)
 
 	p.connect()
 	if err = p.watch(); err != nil {
 		p.ctxC()
-		return nil, fmt.Errorf("watch on file `%s` failed with: %w", filename, err)
+		return nil, fmt.Errorf("watch on file `%s` failed with: %w", p.filename, err)
 	}
 
 	return p, nil
@@ -113,7 +138,8 @@ func (p *vmPlugin) reload() (err error) {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
-	if p.filename, err = prepFile(p.filename); err != nil {
+	// TODO: Hash somewhere after prepfile and reload is done
+	if p.filename, err = prepFile(p.origin); err != nil {
 		return fmt.Errorf("hashing %s failed with: %w", p.filename, err)
 	}
 

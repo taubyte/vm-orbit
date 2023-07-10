@@ -18,21 +18,22 @@ func prepFile(path string) (string, error) {
 
 	name := filepath.Base(path)
 
-	file, err := os.CreateTemp("/tmp", name)
+	file, err := os.CreateTemp("/tmp", name+"-")
 	if err != nil {
-		//verbose
-		return "", err
+		return "", fmt.Errorf("creating temp file %s failed with: %w", name, err)
+	}
+
+	if err = file.Chmod(0755); err != nil {
+		return "", fmt.Errorf("chmod 0755 on %s failed with: %w", file.Name(), err)
 	}
 
 	defer file.Close()
 	if _, err := io.Copy(file, f); err != nil {
-		//verbose
-		return "", err
+		return "", fmt.Errorf("copying from %s to %s failed with: %w", f.Name(), file.Name(), err)
 	}
 
 	if _, err := f.Seek(0, io.SeekStart); err != nil {
-		// verbose
-		return "", err
+		return "", fmt.Errorf("seeking start in file %s failed with: %w", f.Name(), err)
 	}
 
 	mh, err := multihash.SumStream(f, multihash.SHA2_256, -1)

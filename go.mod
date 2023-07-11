@@ -5,7 +5,8 @@ go 1.19
 require (
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/hashicorp/go-plugin v1.4.10
-	github.com/taubyte/go-interfaces v0.2.2
+	github.com/multiformats/go-multihash v0.2.1
+	github.com/taubyte/go-interfaces v0.2.3-pre.v2
 	github.com/taubyte/utils v0.1.6-pre.v2
 	github.com/taubyte/vm v0.2.1
 	google.golang.org/grpc v1.56.1
@@ -150,7 +151,6 @@ require (
 	github.com/multiformats/go-base36 v0.2.0 // indirect
 	github.com/multiformats/go-multiaddr v0.9.0 // indirect
 	github.com/multiformats/go-multibase v0.2.0 // indirect
-	github.com/multiformats/go-multihash v0.2.1 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect

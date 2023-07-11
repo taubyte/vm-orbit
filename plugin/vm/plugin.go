@@ -4,76 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
-	"os/exec"
-	"path/filepath"
 
-	"github.com/fsnotify/fsnotify"
-	"github.com/hashicorp/go-plugin"
 	"github.com/taubyte/go-interfaces/vm"
-	"github.com/taubyte/vm-orbit/link"
 )
-
-func (p *vmPlugin) connect() (err error) {
-	p.proc = plugin.NewClient(
-		&plugin.ClientConfig{
-			HandshakeConfig: HandShake(),
-			Plugins:         link.ClientPluginMap,
-			Cmd:             exec.Command(p.filename),
-			AllowedProtocols: []plugin.Protocol{
-				plugin.ProtocolGRPC,
-			},
-		},
-	)
-
-	p.client, err = p.proc.Client()
-	if err != nil {
-		return fmt.Errorf("getting rpc protocol client failed with: %w", err)
-	}
-
-	return
-}
-
-func (p *vmPlugin) reconnect() error {
-	p.proc.Kill()
-	return p.connect()
-}
-
-func (p *vmPlugin) watch() error {
-	// will panic if any error
-	// creates a new file watcher
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		defer watcher.Close()
-		for {
-			select {
-			case event := <-watcher.Events:
-				if event.Name == p.filename && (event.Op&fsnotify.Write == fsnotify.Write || event.Op&fsnotify.Create == fsnotify.Create) {
-					if err := p.reload(); err != nil {
-						log.Println(err.Error())
-					}
-				}
-			case err := <-watcher.Errors:
-				log.Println("error:", err)
-			case <-p.ctx.Done():
-				return
-			}
-		}
-	}()
-	dir := filepath.Dir(p.filename)
-
-	err = watcher.Add(dir)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 // TODO: Handle ma as multi-address
 func Load(filename string, ctx context.Context) (vm.Plugin, error) {
@@ -86,16 +20,24 @@ func Load(filename string, ctx context.Context) (vm.Plugin, error) {
 	}
 
 	p := &vmPlugin{
-		filename:  filename,
+		origin:    filename,
 		instances: make(map[*pluginInstance]interface{}),
 	}
+
+	if err := p.prepFile(); err != nil {
+		return nil, fmt.Errorf("prepping `%s` failed with: %w", p.origin, err)
+	}
+
+	if err := p.hashFile(); err != nil {
+		return nil, fmt.Errorf("hashing `%s` failed with: %w", p.origin, err)
+	}
+
 	p.ctx, p.ctxC = context.WithCancel(ctx)
 
 	p.connect()
-	err := p.watch()
-	if err != nil {
+	if err := p.watch(); err != nil {
 		p.ctxC()
-		return nil, fmt.Errorf("watch on file `%s` failed with: %w", filename, err)
+		return nil, fmt.Errorf("watch on file `%s` failed with: %w", p.filename, err)
 	}
 
 	return p, nil
@@ -103,67 +45,6 @@ func Load(filename string, ctx context.Context) (vm.Plugin, error) {
 
 func (p *vmPlugin) Name() string {
 	return p.name
-}
-
-func (p *vmPlugin) reload() error {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-	for pI := range p.instances {
-		if err := pI.cleanup(); err != nil {
-			return fmt.Errorf("cleanup plugin `%s` failed with: %w", p.name, err)
-		}
-	}
-
-	if err := p.reconnect(); err != nil {
-		return fmt.Errorf("reconnecting plugin `%s` failed with: %w", p.name, err)
-	}
-
-	for pI := range p.instances {
-		if err := pI.reload(); err != nil {
-			return fmt.Errorf("reloading plugin `%s` failed with:%w", p.name, err)
-		}
-	}
-
-	return nil
-}
-
-func (p *vmPlugin) getLink() (sat Satellite, err error) {
-	raw, err := p.client.Dispense("satellite")
-	if err != nil {
-		return nil, fmt.Errorf("getting satellite failed with: %w", err)
-	}
-
-	if sat, _ = raw.(Satellite); sat == nil {
-		return nil, errors.New("satellite is not a plugin")
-	}
-
-	return sat, nil
-}
-
-func (p *vmPlugin) new(instance vm.Instance) (*pluginInstance, error) {
-	p.lock.RLock()
-	defer p.lock.RUnlock()
-
-	pI := &pluginInstance{
-		plugin:   p,
-		instance: instance,
-	}
-
-	var err error
-	if pI.satellite, err = p.getLink(); err != nil {
-		return nil, fmt.Errorf("getting link to satelite failed with: %w", err)
-	}
-
-	meta, err := pI.satellite.Meta(p.ctx)
-	if err != nil {
-		return nil, fmt.Errorf("meta failed with: %w", err)
-	}
-
-	if len(p.name) < 1 {
-		p.name = meta.Name
-	}
-
-	return pI, nil
 }
 
 func (p *vmPlugin) New(instance vm.Instance) (vm.PluginInstance, error) {

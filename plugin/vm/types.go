@@ -21,6 +21,7 @@ type vmPlugin struct {
 	client plugin.ClientProtocol
 
 	filename string
+	origin   string
 	name     string
 
 	lock sync.RWMutex

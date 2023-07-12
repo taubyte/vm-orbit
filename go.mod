@@ -7,6 +7,7 @@ require (
 	github.com/hashicorp/go-plugin v1.4.10
 	github.com/multiformats/go-multihash v0.2.1
 	github.com/taubyte/go-interfaces v0.2.3-pre.v2
+	github.com/taubyte/go-sdk v0.3.8
 	github.com/taubyte/utils v0.1.6-pre.v2
 	github.com/taubyte/vm v0.2.1
 	google.golang.org/grpc v1.56.1

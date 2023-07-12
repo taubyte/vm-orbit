@@ -614,6 +614,8 @@ github.com/taubyte/domain-validation v1.0.0 h1:yUt6y7b/3PC9aocvl7s8cBKG4ieN35zQq
 github.com/taubyte/domain-validation v1.0.0/go.mod h1:/X3yd7sBjnE323rA8I9PiUt5+NlKU4I02nQik25Vqe8=
 github.com/taubyte/go-interfaces v0.2.3-pre.v2 h1:tm6BepaGtEcvuNxuFZa4vNxZj9h+0BqrF8X+TXvSdwo=
 github.com/taubyte/go-interfaces v0.2.3-pre.v2/go.mod h1:9GDCq2MMFEZ6rDv/gqZbFLjDz//lgE0CBllumUBc19A=
+github.com/taubyte/go-sdk v0.3.8 h1:RIg7N+ccIwTwqPopRMCrKgGhVigN1tPTCi1JG/mm4fg=
+github.com/taubyte/go-sdk v0.3.8/go.mod h1:WGMYl7JzjnVbTJbGUpXNFCh27jNg/oqZL1Sbh8+fOgo=
 github.com/taubyte/go-simple-container v0.4.2 h1:WMC/kgubrQiiDzMfLs3X0WcAMl9hkVOyxpOHjMPXjtg=
 github.com/taubyte/go-simple-git v0.2.5 h1:ESwhDVHGF0oVPFtZvCS5SzrugjCpK0KKaQIQC6AxzDE=
 github.com/taubyte/go-specs v0.10.5-pre h1:w+zwF8mR5oG5tiWZW7N1AE7o8YYVKXDGqSp5mPffOmA=

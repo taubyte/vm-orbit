@@ -127,9 +127,7 @@ func TestDataHelpers(t *testing.T) {
 	fi := getFunction(t, wasmFile, rt, plugin)
 
 	ret := fi.Call(ctx)
-	if ret.Error() != nil {
-		t.Error(ret.Error())
-	}
+	assert.NilError(t, ret.Error())
 }
 
 func TestSizeHelpers(t *testing.T) {
@@ -150,7 +148,5 @@ func TestSizeHelpers(t *testing.T) {
 	fi := getFunction(t, wasmFile, rt, plugin)
 
 	ret := fi.Call(ctx)
-	if ret.Error() != nil {
-		t.Error(ret.Error())
-	}
+	assert.NilError(t, ret.Error())
 }

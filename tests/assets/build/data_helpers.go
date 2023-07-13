@@ -14,31 +14,6 @@ func readWritePlus1(*byte, *byte, *byte, uint32, *byte, *byte, uint32, *byte, *b
 
 //export ping
 func ping() {
-	var (
-		byteVal                byte = 42
-		byteValRcv             byte
-		bytesSlice             = [][]byte{{42, 43, 44}, {45, 46, 47}, {48, 49, 50}}
-		bytesSliceEncoded      []byte
-		bytesSliceEncodedSize  uint32
-		bytesSliceRcvEncoded   []byte
-		bytesSliceRcv          [][]byte
-		stringVal              = "hello world"
-		stringValBytes         = []byte(stringVal)
-		stringValBytesLen      = uint32(len(stringValBytes))
-		stringRcvRaw           = make([]byte, len([]byte(stringVal+"one")))
-		stringSlice            = []string{"hello", "world"}
-		stringSliceEncoded     []byte
-		stringSliceEncodedSize uint32
-		stringSliceRcvEncoded  []byte
-		stringSliceRcv         []string
-		u16                    uint16 = 52
-		u16Rcv                 uint16
-		u32                    uint32 = 62
-		u32Rcv                 uint32
-		u64                    uint64 = 72
-		u64Rcv                 uint64
-	)
-
 	if err := codec.Convert(bytesSlice).To(&bytesSliceEncoded); err != nil {
 		panic(err)
 	}
@@ -91,3 +66,28 @@ func ping() {
 		panic(fmt.Sprintf("u64 %d!=%d\n", u64, u64Rcv))
 	}
 }
+
+var (
+	byteVal                byte = 42
+	byteValRcv             byte
+	bytesSlice             = [][]byte{{42, 43, 44}, {45, 46, 47}, {48, 49, 50}}
+	bytesSliceEncoded      []byte
+	bytesSliceEncodedSize  uint32
+	bytesSliceRcvEncoded   []byte
+	bytesSliceRcv          [][]byte
+	stringVal              = "hello world"
+	stringValBytes         = []byte(stringVal)
+	stringValBytesLen      = uint32(len(stringValBytes))
+	stringRcvRaw           = make([]byte, len([]byte(stringVal+"one")))
+	stringSlice            = []string{"hello", "world"}
+	stringSliceEncoded     []byte
+	stringSliceEncodedSize uint32
+	stringSliceRcvEncoded  []byte
+	stringSliceRcv         []string
+	u16                    uint16 = 52
+	u16Rcv                 uint16
+	u32                    uint32 = 62
+	u32Rcv                 uint32
+	u64                    uint64 = 72
+	u64Rcv                 uint64
+)

@@ -131,3 +131,26 @@ func TestDataHelpers(t *testing.T) {
 		t.Error(ret.Error())
 	}
 }
+
+func TestSizeHelpers(t *testing.T) {
+	err := buildPlugin("")
+	assert.NilError(t, err)
+
+	instance, ctx, err := newVM()
+	assert.NilError(t, err)
+	defer instance.Close()
+
+	rt, err := instance.Runtime(nil)
+	assert.NilError(t, err)
+	defer rt.Close()
+
+	wasmFile, plugin := plugin(t, "size_helpers.wasm", ctx)
+	defer plugin.Close()
+
+	fi := getFunction(t, wasmFile, rt, plugin)
+
+	ret := fi.Call(ctx)
+	if ret.Error() != nil {
+		t.Error(ret.Error())
+	}
+}

@@ -122,8 +122,7 @@ func (t *tester) W_readWriteSize(
 	stringSizePtr,
 	stringSlicePtr,
 	stringSliceSize,
-	stringSliceSizePtr,
-	placeHolder uint32,
+	stringSliceSizePtr uint32,
 ) {
 	bytesSliceVal, err := module.ReadBytesSlice(bytesSlicePtr, bytesSliceSize)
 	if err != nil {

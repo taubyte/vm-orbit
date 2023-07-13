@@ -17,7 +17,6 @@ func (h *moduleLink) ReadByte(ptr uint32) (byte, error) {
 
 func (h *moduleLink) WriteByte(ptr uint32, val byte) (uint32, error) {
 	data := [1]byte{val}
-
 	return h.MemoryWrite(ptr, data[:])
 }
 
@@ -33,7 +32,6 @@ func (h *moduleLink) ReadUint16(ptr uint32) (uint16, error) {
 func (h *moduleLink) WriteUint16(ptr uint32, val uint16) (uint32, error) {
 	var data [2]byte
 	binary.LittleEndian.PutUint16(data[:], val)
-
 	return h.MemoryWrite(ptr, data[:])
 }
 
@@ -49,7 +47,6 @@ func (h *moduleLink) ReadUint32(ptr uint32) (uint32, error) {
 func (h *moduleLink) WriteUint32(ptr uint32, val uint32) (uint32, error) {
 	var data [4]byte
 	binary.LittleEndian.PutUint32(data[:], val)
-
 	return h.MemoryWrite(ptr, data[:])
 }
 
@@ -65,7 +62,6 @@ func (h *moduleLink) ReadUint64(ptr uint32) (uint64, error) {
 func (h *moduleLink) WriteUint64(ptr uint32, val uint64) (uint32, error) {
 	var data [8]byte
 	binary.LittleEndian.PutUint64(data[:], val)
-
 	return h.MemoryWrite(ptr, data[:])
 }
 

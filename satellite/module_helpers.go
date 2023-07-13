@@ -16,7 +16,9 @@ func (h *moduleLink) ReadByte(ptr uint32) (byte, error) {
 }
 
 func (h *moduleLink) WriteByte(ptr uint32, val byte) (uint32, error) {
-	return h.MemoryWrite(ptr, []byte{val})
+	data := [1]byte{val}
+
+	return h.MemoryWrite(ptr, data[:])
 }
 
 func (h *moduleLink) ReadUint16(ptr uint32) (uint16, error) {
@@ -29,8 +31,10 @@ func (h *moduleLink) ReadUint16(ptr uint32) (uint16, error) {
 }
 
 func (h *moduleLink) WriteUint16(ptr uint32, val uint16) (uint32, error) {
-	data := binary.LittleEndian.AppendUint16(nil, val)
-	return h.MemoryWrite(ptr, data)
+	var data [2]byte
+	binary.LittleEndian.PutUint16(data[:], val)
+
+	return h.MemoryWrite(ptr, data[:])
 }
 
 func (h *moduleLink) ReadUint32(ptr uint32) (uint32, error) {
@@ -39,12 +43,14 @@ func (h *moduleLink) ReadUint32(ptr uint32) (uint32, error) {
 		return 0, err
 	}
 
-	return binary.BigEndian.Uint32(data), nil
+	return binary.LittleEndian.Uint32(data), nil
 }
 
 func (h *moduleLink) WriteUint32(ptr uint32, val uint32) (uint32, error) {
-	data := binary.LittleEndian.AppendUint32(nil, val)
-	return h.MemoryWrite(ptr, data)
+	var data [4]byte
+	binary.LittleEndian.PutUint32(data[:], val)
+
+	return h.MemoryWrite(ptr, data[:])
 }
 
 func (h *moduleLink) ReadUint64(ptr uint32) (uint64, error) {
@@ -53,12 +59,14 @@ func (h *moduleLink) ReadUint64(ptr uint32) (uint64, error) {
 		return 0, err
 	}
 
-	return binary.BigEndian.Uint64(data), nil
+	return binary.LittleEndian.Uint64(data), nil
 }
 
 func (h *moduleLink) WriteUint64(ptr uint32, val uint64) (uint32, error) {
-	data := binary.LittleEndian.AppendUint64(nil, val)
-	return h.MemoryWrite(ptr, data)
+	var data [8]byte
+	binary.LittleEndian.PutUint64(data[:], val)
+
+	return h.MemoryWrite(ptr, data[:])
 }
 
 func (h *moduleLink) ReadString(ptr uint32, size uint32) (string, error) {
@@ -76,7 +84,7 @@ func (h *moduleLink) WriteString(ptr uint32, val string) (uint32, error) {
 }
 
 func (h *moduleLink) WriteStringSize(sizePtr uint32, val string) (uint32, error) {
-	return h.MemoryWrite(sizePtr, []byte(val))
+	return h.WriteUint32(sizePtr, uint32(len(val)))
 }
 
 func (h *moduleLink) ReadStringSlice(ptr uint32, size uint32) ([]string, error) {

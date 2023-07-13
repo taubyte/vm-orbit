@@ -2,6 +2,8 @@ package testing_test
 
 import (
 	goCTX "context"
+	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -9,6 +11,7 @@ import (
 	"sync"
 	"testing"
 
+	builder "bitbucket.org/taubyte/go-builder"
 	"github.com/taubyte/go-interfaces/services/tns/mocks"
 	"github.com/taubyte/go-interfaces/vm"
 	"github.com/taubyte/utils/id"
@@ -23,6 +26,55 @@ import (
 	source "github.com/taubyte/vm/sources/taubyte"
 )
 
+func TestBuild(t *testing.T) {
+	_builder, err := builder.New(goCTX.TODO(), "/home/tafkhan/Documents/Work/Taubyte/test/tb_code_testCustomDomain/functions/ping_pong")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	out, err := _builder.Build()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	fmt.Println(out.OutDir())
+}
+
+func TestHelpers(t *testing.T) {
+	err := buildPlugin()
+	assert.NilError(t, err)
+
+	instance, ctx, err := newVM()
+	assert.NilError(t, err)
+	defer instance.Close()
+
+	rt, err := instance.Runtime(nil)
+	assert.NilError(t, err)
+	defer rt.Close()
+
+	wasmFile, plugin := plugin(t, "helpers.wasm", ctx)
+	defer plugin.Close()
+
+	fi := getFunction(t, wasmFile, rt, plugin)
+
+	ret := fi.Call(ctx)
+
+	stderr, err := io.ReadAll(rt.Stderr())
+	if err == nil {
+		fmt.Println("STDERR:", string(stderr))
+	}
+
+	stdout, err := io.ReadAll(rt.Stdout())
+	if err == nil {
+		fmt.Println("STDOUT:", string(stdout))
+	}
+
+	fmt.Println("EXTRA OUT:", ret.Error())
+
+}
+
 func TestPlugin(t *testing.T) {
 	err := buildPlugin()
 	assert.NilError(t, err)
@@ -33,7 +85,7 @@ func TestPlugin(t *testing.T) {
 	rt, err := instance.Runtime(nil)
 	assert.NilError(t, err)
 
-	wasmFile, plugin := plugin(t, ctx)
+	wasmFile, plugin := plugin(t, "main.wasm", ctx)
 	defer plugin.Close()
 
 	fi := getFunction(t, wasmFile, rt, plugin)
@@ -58,7 +110,7 @@ func TestConcurrentPlugin(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(runtimeCount)
-	wasmFile, plugin := plugin(t, ctx)
+	wasmFile, plugin := plugin(t, "main.wasm", ctx)
 	defer plugin.Close()
 
 	for i := 0; i < runtimeCount; i++ {
@@ -84,7 +136,7 @@ func TestUpdatePlugin(t *testing.T) {
 	rt, err := instance.Runtime(nil)
 	assert.NilError(t, err)
 
-	wasmFile, plugin := plugin(t, ctx)
+	wasmFile, plugin := plugin(t, "main.wasm", ctx)
 	defer plugin.Close()
 
 	_, _, err = rt.Attach(plugin)
@@ -121,12 +173,12 @@ func TestUpdatePlugin(t *testing.T) {
 	checkCall(t, ctx, fi, 5, 5+43)
 }
 
-func plugin(t *testing.T, ctx goCTX.Context) (wasmFile string, plugin vm.Plugin) {
+func plugin(t *testing.T, wasmFileName string, ctx goCTX.Context) (wasmFile string, plugin vm.Plugin) {
 	wd, err := os.Getwd()
 	assert.NilError(t, err)
 
 	pluginBinary := path.Join(wd, "plugin", "plugin")
-	wasmFile = path.Join(wd, "plugin", "wasm", "main.wasm")
+	wasmFile = path.Join(wd, "plugin", "wasm", wasmFileName)
 	plugin, err = vmPlugin.Load(pluginBinary, ctx)
 	assert.NilError(t, err)
 

@@ -3,6 +3,7 @@ module github.com/taubyte/vm-orbit
 go 1.19
 
 require (
+	bitbucket.org/taubyte/go-builder v0.1.2
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/hashicorp/go-plugin v1.4.10
 	github.com/multiformats/go-multihash v0.2.1
@@ -137,7 +138,6 @@ require (
 )
 
 require (
-	bitbucket.org/taubyte/go-builder v0.1.2 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect

@@ -8,3 +8,9 @@ import (
 func (b *builders) Go() common.Builder {
 	return goBuilder.New()
 }
+
+func GoBuildTags(tags ...string) []string {
+	args := []string{"-tags"}
+	args = append(args, tags...)
+	return args
+}

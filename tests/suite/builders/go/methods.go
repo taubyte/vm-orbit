@@ -2,13 +2,16 @@ package goBuilder
 
 import (
 	"context"
+	"fmt"
+	"os/exec"
 	"path"
 
 	_ "embed"
 
-	"github.com/otiai10/copy"
 	"github.com/taubyte/vm-orbit/tests/suite/builders/common"
 	"github.com/taubyte/vm-orbit/tests/suite/builders/fixtures"
+
+	"github.com/otiai10/copy"
 )
 
 type goBuilder struct{}
@@ -41,4 +44,14 @@ func (g *goBuilder) Name() string {
 	return "go"
 }
 
-func (g *goBuilder) Plugin() {}
+func (g *goBuilder) Plugin(_path string, name string, extraArgs ...string) (string, error) {
+	args := []string{"build", "-o", name}
+	args = append(args, extraArgs...)
+	cmd := exec.Command("go", args...)
+	cmd.Dir = _path
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("building go plugin failed with: %w", err)
+	}
+
+	return path.Join(_path, name), nil
+}

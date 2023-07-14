@@ -25,10 +25,12 @@ import (
 
 var (
 	wd         string
-	assetDir   string
+	fixtureDir string
 	taubyteDir = ".taubyte"
 	goMod      = "go.mod"
 	buildDir   string
+
+	wasmFixtures = []string{"data_helpers", "size_helpers", "basic"}
 )
 
 func initializeAssetPaths() (err error) {
@@ -36,8 +38,8 @@ func initializeAssetPaths() (err error) {
 		return
 	}
 
-	assetDir = path.Join(wd, "assets")
-	buildDir = path.Join(assetDir, "build")
+	fixtureDir = path.Join(wd, "fixtures")
+	buildDir = path.Join(fixtureDir, "build")
 
 	return
 }
@@ -75,7 +77,7 @@ func initializeWasm(fileName string) error {
 		return fmt.Errorf("builder.Build failed with: %w", err)
 	}
 
-	wasmPath := path.Join(assetDir, fileName+".wasm")
+	wasmPath := path.Join(fixtureDir, fileName+".wasm")
 	if err := copy.Copy(path.Join(out.OutDir(), "artifact.wasm"), wasmPath); err != nil {
 		return fmt.Errorf("copying wasm build failed with: %w", err)
 	}
@@ -84,11 +86,9 @@ func initializeWasm(fileName string) error {
 }
 
 func plugin(t *testing.T, wasmFileName string, ctx goCTX.Context) (wasmFile string, plugin vm.Plugin) {
-	wd, err := os.Getwd()
-	assert.NilError(t, err)
-
+	var err error
 	pluginBinary := path.Join(wd, "plugin", "plugin")
-	wasmFile = path.Join(wd, "assets", wasmFileName)
+	wasmFile = path.Join(fixtureDir, wasmFileName)
 	plugin, err = vmPlugin.Load(pluginBinary, ctx)
 	assert.NilError(t, err)
 

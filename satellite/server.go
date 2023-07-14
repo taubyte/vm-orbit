@@ -83,6 +83,10 @@ func (p *GRPCPluginServer) Call(ctx context.Context, req *proto.CallRequest) (*p
 			rv = reflect.ValueOf(uint32(v))
 		case reflect.Uint64:
 			rv = reflect.ValueOf(uint64(v))
+		case reflect.Float32:
+			rv = reflect.ValueOf(float32(v))
+		case reflect.Float64:
+			rv = reflect.ValueOf(float64(v))
 		default:
 			return nil, serverError("invalid input type %#v", tfx.In(len(in)).Kind())
 		}

@@ -17,15 +17,11 @@ func init() {
 		panic(err)
 	}
 
-	if _, err := os.Stat(path.Join(assetDir, "data_helpers.wasm")); err != nil {
-		if err = initializeWasm("data_helpers"); err != nil {
-			panic(err)
-		}
-	}
-
-	if _, err := os.Stat(path.Join(assetDir, "basic.wasm")); err != nil {
-		if err = initializeWasm("basic"); err != nil {
-			panic(err)
+	for _, fixture := range wasmFixtures {
+		if _, err := os.Stat(path.Join(fixtureDir, fixture+".wasm")); os.IsNotExist(err) {
+			if err = initializeWasm(fixture); err != nil {
+				panic(err)
+			}
 		}
 	}
 }

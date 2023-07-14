@@ -1,5 +1,8 @@
-# Ignore all .wasm files
+# Ignore all .wasm files used for tests
 *.wasm
 
-# Ignore specific file
-/tests/plugin/plugin
+# Ignore everything in /tests/plugin
+/tests/plugin/*
+
+# But don't ignore main.go in /tests/plugin
+!/tests/plugin/main.go

@@ -7,14 +7,16 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/hashicorp/go-plugin v1.4.10
 	github.com/multiformats/go-multihash v0.2.1
-	github.com/otiai10/copy v1.11.0
-	github.com/taubyte/go-interfaces v0.2.3-pre.v2
+	github.com/otiai10/copy v1.12.0
+	github.com/pterm/pterm v0.12.33
+	github.com/taubyte/builder v0.0.0-20230714181048-6ea47db67d29
+	github.com/taubyte/go-interfaces v0.2.4
 	github.com/taubyte/go-sdk v0.3.8
 	github.com/taubyte/utils v0.1.6
 	github.com/taubyte/vm v0.2.1
 	google.golang.org/grpc v1.56.1
 	google.golang.org/protobuf v1.30.0
-	gotest.tools/v3 v3.4.0
+	gotest.tools/v3 v3.5.0
 )
 
 require (
@@ -178,7 +180,6 @@ require (
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
-	github.com/pterm/pterm v0.12.33 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect

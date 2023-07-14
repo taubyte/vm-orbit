@@ -1,24 +1,6 @@
 # vm-orbit
 A tool for creating plugin binaries to be deployed on a Taubyte Cloud 
 
-# Building Proto 
-
-## Install go protoc gen
-```bash
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-
-export PATH="$PATH:$(go env GOPATH)/bin"
-```
-
-## Build 
-```bash 
-cd <path/to/vm-orbit>
-``` 
-```bash
-go generate ./...
-```
-
 # Creating A Plugin 
 
 ## Exported Functions
@@ -80,6 +62,59 @@ go build
 ```
 
 * This binary can be referenced with shape deployment via spore-drive
+
+# Testing 
+Dreamland is a tool used to create a local taubyte network.
+Plugins can be tested using dreamland before deploying to a production network. 
+
+## Dreamland 
+
+### Inject Plugin 
+Start Dreamland 
+```bash
+dream new multiverse 
+```
+
+Once Network has been started (after  `SUCCESS  Universe <name-of-universe> started!`), inject plugin from a new terminal
+```bash
+dream inject attachPlugin -p <path/to/plugin/binary>
+```
+
+### Using in a DFunc
+Create reference to the plugin module and function.
+```go 
+//go:wasm-module moduleName
+//export functionName
+func functionName(*byte, uint32) uint32
+```
+* The moduleName is the name given in the plugin.Export() method
+* The name of the function is the name of your structure's method minus `W_`
+* The signature follows 
+### Example 
+
+
+
+
+
+
+# Building Proto 
+
+## Install go protoc gen
+```bash
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+export PATH="$PATH:$(go env GOPATH)/bin"
+```
+
+## Build 
+```bash 
+cd <path/to/vm-orbit>
+``` 
+```bash
+go generate ./...
+```
+
 
 # License
 Please see the LICENSE file for details.

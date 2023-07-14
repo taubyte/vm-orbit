@@ -1,2 +1,5 @@
-# Plugin 
-plugin.*
+# Ignore all .wasm files
+*.wasm
+
+# Ignore specific file
+/tests/plugin/plugin

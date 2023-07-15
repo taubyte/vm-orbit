@@ -11,6 +11,7 @@ import (
 	build "github.com/taubyte/builder"
 )
 
+// Fixtures writes the given builders fixture tarball to a temp directory and unzips it
 func Fixtures(builder Builder) (tempDir string, err error) {
 	tempDir, err = os.MkdirTemp("/tmp", "*")
 	if err != nil {
@@ -34,6 +35,7 @@ func Fixtures(builder Builder) (tempDir string, err error) {
 	return
 }
 
+// Wasm builds the a wasm file from the given directory
 func Wasm(ctx context.Context, buildHelper Builder, buildDir string) (wasmFile string, err error) {
 	builder, err := build.New(ctx, buildDir)
 	if err != nil {

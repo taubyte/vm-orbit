@@ -12,8 +12,8 @@ type helloWorlder struct{}
 
 var helloWorld = "hello world!"
 
-// our dFunc that will be calling this method will need to know the length of the written string before reading
-// so we will need to have a method which writes the size of the string
+// our dFunc that will be calling this method will need to know the length of the written string
+// to allocate enough memory for the data to be written
 func (t *helloWorlder) W_helloSize(ctx context.Context, module satellite.Module, sizePtr uint32) uint32 {
 	if _, err := module.WriteStringSize(sizePtr, helloWorld); err != nil {
 		return 1

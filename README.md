@@ -80,23 +80,153 @@ Once Network has been started (after  `SUCCESS  Universe <name-of-universe> star
 dream inject attachPlugin -p <path/to/plugin/binary>
 ```
 
-### Using in a DFunc
-Create reference to the plugin module and function.
+### Create a Dffunc on Console 
+You can access a local instance of webconsole by running 
+```bash 
+dream status console 
+```
+
+Create a [DFUNC](#creating-a-dfunc-with-reference-to-a-plugin) 
+It is recommended to make a http GET function to quickly test, using a generated domain
+
+To call this http DFunc you will need to add the generated fqdn to /etc/host 127.0.0.1 
+You will also need to append the port that Substrate(node) protocol is running on to the url
+You can get this port by running
+```bash
+dream status node
+```
+
+after these two steps hitting `<generated-fqdn>:<node-port>/<function-path>` will execute your function
+
+## Go Test 
+`vm-orbit/tests/suite` can be used to create local plugin tests quickly 
+For the testing the following required: 
+* Plugin Binary
+* Wasm File with an exported method calling your plugin method
+
+Suite has helpers to generate these
+### Using the Builder For Plugins and Wasm
+You will need to create a builder for the language you will be using to generate your Wasm file and plugin
+
+```go 
+	import "github.com/taubyte/vm-orbit/tests/suite"
+
+	builder := suite.Builder.Go()
+```
+
+#### Build Your Plugin
+```go 
+	pluginPath, err := builder.Plugin("path/to/plugin")
+```
+
+#### Build Your Wasm File 
+You will need to write code files that will properly reference your plugins refer to: [DFUNC](#creating-a-dfunc-with-reference-to-a-plugin)
+
+Then used the builder to generate the wasm file
+```go 
+	wasmPath, err := builder.Wasm(context.Background(), ...list-of-Files-To-Include)
+```
+
+### Using the Suite to Test Plugins
+
+#### Create a Testing Suite 
+```go
+import "github.com/taubyte/vm-orbit/tests/suite"
+
+testingSuite, err := suite.New(context.Background)
+```
+
+#### Attach a Plugin onto the Suite
+```go
+err := testingSuite.AttachPluginFromPath("path/to/plugin")
+```
+
+#### Attach the Wasm File to the Suite, and Get the Module
+```go
+module, err := testingSuite.WasmModule("path/to/wasmFile")
+```
+
+#### Call the Dfunc
+```go
+ret, err := module.Call(context.Background(),"functionName")
+```
+
+## Creating a Dfunc with reference to a Plugin
+
+### Go
+
+Example: 
 ```go 
 //go:wasm-module moduleName
-//export functionName
-func functionName(*byte, uint32) uint32
+//export writeSize
+func writeSize(*uint32) 
+
+//go:wasm-module moduleName
+//export writeName
+func writeName(*byte)
+
+//export dFunc
+func dFunc() {
+	var size uint32 
+	writeSize(&size)
+
+	nameData := make([]byte, size)
+	writeName(&nameData[0])
+
+	name := string(nameData)
+}
 ```
-* The moduleName is the name given in the plugin.Export() method
+* The comments before the function declarations are required
+* the //go:wasm-module comment gives a reference to the name of the wasm module of the plugin 
+	* Example:
+	```go
+	package main
+
+	import "github.com/taubyte/vm-orbit/plugin"
+
+	func main() {
+		// methods of helloWorlder will be exported to the module "helloWorld"
+		plugin.Export("helloWorld", &helloWorlder{})
+	}
+	```
+	* Here the plugin module name is `helloWorld`
 * The name of the function is the name of your structure's method minus `W_`
-* The signature follows 
-### Example 
+	* Example: 
+	```go 
+	func (t *helloWorlder) W_helloSize(ctx context.Context, module satellite.Module, sizePtr uint32) uint32 {
+		if _, err := module.WriteStringSize(sizePtr, helloWorld); err != nil {
+			return 1
+		}
+
+		return 0
+	}
+	```
+	* Here the name of this method would be `helloSize`
+
+#### Understanding The Signature in the DFunc 
+A good rule of thumb is if a value needs to be read from memory or written to the signature value needs to be a pointer. If the value is interpreted a raw value should be passed.
+
+Uints, Floats, and Ints and their pointers are supported types for the signature
+
+Any data more complex than these types are interpreted as []byte which must be read or written to in memory. 
+
+Any data more complex than []byte is encoded to []byte through the use of helper methods, already available in an orbit module 
+```go 
+import 	"github.com/taubyte/vm-orbit/satellite"
+
+func (h *helloWorlder) W_readWrite(
+	ctx context.Context,
+	module satellite.Module,
+	stringSlicePtr,
+	stringSliceSize,
+){
+	stringSlice, err := module.ReadStringSlice(stringSlicePtr,stringSliceSize)
+}
 
 
+```
 
-
-
-
+More encoding methods can be found at `github.com/taubyte/go-sdk/utils/codec`
 # Building Proto 
 
 ## Install go protoc gen

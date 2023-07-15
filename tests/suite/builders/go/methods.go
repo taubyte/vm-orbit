@@ -16,8 +16,10 @@ import (
 	"github.com/otiai10/copy"
 )
 
+// goBuilder wraps methods for a Builder
 type goBuilder struct{}
 
+// returns a goBuilder
 func New() *goBuilder {
 	return &goBuilder{}
 }

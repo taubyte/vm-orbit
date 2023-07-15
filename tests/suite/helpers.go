@@ -18,11 +18,11 @@ import (
 	source "github.com/taubyte/vm/sources/taubyte"
 )
 
-type BuildHelper interface {
+type buildHelper interface {
 	Go() common.Builder
 }
 
-func Builder() BuildHelper {
+func Builder() buildHelper {
 	return builders.New()
 }
 
@@ -77,7 +77,15 @@ func New(ctx context.Context) (*suite, error) {
 	}, nil
 }
 
-func (s *suite) AttachPlugin(filename string) error {
+func (s *suite) AttachPlugin(plugin vm.Plugin) error {
+	if _, _, err := s.runtime.Attach(plugin); err != nil {
+		return fmt.Errorf("attaching plugin `%s` failed with: %w", plugin.Name(), err)
+	}
+
+	return nil
+}
+
+func (s *suite) AttachPluginFromPath(filename string) error {
 	plugin, err := vmPlugin.Load(filename, s.ctx)
 	if err != nil {
 		return fmt.Errorf("loading plugin `%s` failed with: %w", filename, err)
@@ -114,4 +122,10 @@ func (m *module) Call(ctx context.Context, function string, args ...interface{})
 	}
 
 	return ret, nil
+}
+
+func GoBuildTags(tags ...string) []string {
+	args := []string{"-tags"}
+	args = append(args, tags...)
+	return args
 }

@@ -1,20 +1,28 @@
 package tests
 
 import (
+	"context"
 	"os"
 	"path"
 	"sync"
 	"testing"
 
-	"github.com/taubyte/go-interfaces/vm"
 	"gotest.tools/v3/assert"
 
+	"github.com/taubyte/go-interfaces/vm"
 	vmPlugin "github.com/taubyte/vm-orbit/plugin/vm"
+	"github.com/taubyte/vm-orbit/tests/suite"
 )
 
 func init() {
 	if err := initializeAssetPaths(); err != nil {
 		panic(err)
+	}
+
+	if _, err := os.Stat(path.Join(fixtureDir, pluginName)); err != nil {
+		if err = initializePlugin(); err != nil {
+			panic(err)
+		}
 	}
 
 	for _, fixture := range wasmFixtures {
@@ -26,51 +34,50 @@ func init() {
 	}
 }
 
+func basicCall(t *testing.T, plugin vm.Plugin, wasmModule string, args ...interface{}) vm.Return {
+	testingSuite, err := suite.New(context.Background())
+	assert.NilError(t, err)
+
+	err = testingSuite.AttachPlugin(plugin)
+	assert.NilError(t, err)
+
+	module, err := testingSuite.WasmModule(wasmModule)
+	assert.NilError(t, err)
+
+	ret, err := module.Call(context.TODO(), "ping", args...)
+	assert.NilError(t, err)
+
+	return ret
+}
+
+func testReturn(t *testing.T, ret vm.Return, expected uint32) {
+	var retVal uint32
+	err := ret.Reflect(&retVal)
+	assert.NilError(t, err)
+
+	assert.Equal(t, retVal, expected)
+}
+
 func TestPlugin(t *testing.T) {
-	err := buildPlugin("")
+	plugin, err := vmPlugin.Load(pluginBinary, context.Background())
 	assert.NilError(t, err)
-
-	instance, ctx, err := newVM()
-	assert.NilError(t, err)
-
-	rt, err := instance.Runtime(nil)
-	assert.NilError(t, err)
-
-	wasmFile, plugin := plugin(t, "basic.wasm", ctx)
-	defer plugin.Close()
-
-	fi := getFunction(t, wasmFile, rt, plugin)
-
-	checkCall(t, ctx, fi, 5, 5+42)
+	ret := basicCall(t, plugin, basicWasm, 5)
+	testReturn(t, ret, 47)
 }
 
 func TestConcurrentPlugin(t *testing.T) {
-	err := buildPlugin("")
+	runtimeCount := 5
+	plugin, err := vmPlugin.Load(pluginBinary, context.Background())
 	assert.NilError(t, err)
-
-	instance, ctx, err := newVM()
-	assert.NilError(t, err)
-
-	runtimeCount := 1
-	runtimes := make([]vm.Runtime, runtimeCount)
-
-	for i := 0; i < runtimeCount; i++ {
-		runtimes[i], err = instance.Runtime(nil)
-		assert.NilError(t, err)
-	}
 
 	var wg sync.WaitGroup
 	wg.Add(runtimeCount)
-	wasmFile, plugin := plugin(t, "basic.wasm", ctx)
-	defer plugin.Close()
-
 	for i := 0; i < runtimeCount; i++ {
-		go func(idx int) {
-			defer wg.Done()
-			rt := runtimes[idx]
-			fi := getFunction(t, wasmFile, rt, plugin)
-			checkCall(t, ctx, fi, uint32(idx), uint32(idx)+42)
-		}(i)
+		go func(val uint32) {
+			ret := basicCall(t, plugin, basicWasm, 5)
+			testReturn(t, ret, 47)
+			wg.Done()
+		}(uint32(i))
 	}
 
 	wg.Wait()
@@ -80,69 +87,37 @@ func TestUpdatePlugin(t *testing.T) {
 	pluginEvents := vmPlugin.Subscribe(t)
 	defer vmPlugin.UnSubscribe(t)
 
-	instance, ctx, err := newVM()
+	testingSuite, err := suite.New(context.Background())
 	assert.NilError(t, err)
 
-	rt, err := instance.Runtime(nil)
+	err = testingSuite.AttachPluginFromPath(pluginBinary)
 	assert.NilError(t, err)
 
-	wasmFile, plugin := plugin(t, "basic.wasm", ctx)
-	defer plugin.Close()
-
-	_, _, err = rt.Attach(plugin)
+	err = initializePlugin(suite.GoBuildTags("update")...)
 	assert.NilError(t, err)
-
-	err = buildPlugin("update")
-	assert.NilError(t, err)
+	defer initializePlugin()
 
 	<-pluginEvents
-	mod, err := rt.Module("/file/" + wasmFile)
+	module, err := testingSuite.WasmModule(basicWasm)
 	assert.NilError(t, err)
 
-	fi, err := mod.Function("ping")
+	callVal := uint32(5)
+	ret, err := module.Call(context.Background(), "ping", callVal)
 	assert.NilError(t, err)
 
-	checkCall(t, ctx, fi, 5, 5+43)
+	testReturn(t, ret, 48)
 }
 
 func TestDataHelpers(t *testing.T) {
-	err := buildPlugin("")
+	plugin, err := vmPlugin.Load(pluginBinary, context.Background())
 	assert.NilError(t, err)
 
-	instance, ctx, err := newVM()
-	assert.NilError(t, err)
-	defer instance.Close()
-
-	rt, err := instance.Runtime(nil)
-	assert.NilError(t, err)
-	defer rt.Close()
-
-	wasmFile, plugin := plugin(t, "data_helpers.wasm", ctx)
-	defer plugin.Close()
-
-	fi := getFunction(t, wasmFile, rt, plugin)
-
-	ret := fi.Call(ctx)
-	assert.NilError(t, ret.Error())
+	basicCall(t, plugin, path.Join(fixtureDir, "data_helpers.wasm"))
 }
 
 func TestSizeHelpers(t *testing.T) {
-	err := buildPlugin("")
+	plugin, err := vmPlugin.Load(pluginBinary, context.Background())
 	assert.NilError(t, err)
 
-	instance, ctx, err := newVM()
-	assert.NilError(t, err)
-	defer instance.Close()
-
-	rt, err := instance.Runtime(nil)
-	assert.NilError(t, err)
-	defer rt.Close()
-
-	wasmFile, plugin := plugin(t, "size_helpers.wasm", ctx)
-	defer plugin.Close()
-
-	fi := getFunction(t, wasmFile, rt, plugin)
-
-	ret := fi.Call(ctx)
-	assert.NilError(t, ret.Error())
+	basicCall(t, plugin, path.Join(fixtureDir, "size_helpers.wasm"))
 }

@@ -3,7 +3,6 @@ module github.com/taubyte/vm-orbit
 go 1.19
 
 require (
-	bitbucket.org/taubyte/go-builder v0.1.2
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/hashicorp/go-plugin v1.4.10
 	github.com/multiformats/go-multihash v0.2.1

@@ -1,8 +1,9 @@
 # Ignore all .wasm files used for tests
 *.wasm
 
-# Ignore everything in /tests/plugin
-/tests/plugin/*
+# Ignore everything in the /tests/fixtures directory
+/tests/fixtures/*
 
-# But don't ignore main.go in /tests/plugin
-!/tests/plugin/main.go
+# But do not ignore /tests/fixtures/code and /tests/fixtures/plugin directories
+!/tests/fixtures/_code/
+!/tests/fixtures/plugin/

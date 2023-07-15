@@ -2,8 +2,8 @@
 *.wasm
 
 # Ignore everything in the /tests/fixtures directory
-/tests/fixtures/*
+/tests/e2e/go/fixtures/*
 
 # But do not ignore /tests/fixtures/code and /tests/fixtures/plugin directories
-!/tests/fixtures/_code/
-!/tests/fixtures/plugin/
+!/tests/e2e/go/fixtures/_code/
+!/tests/e2e/go/fixtures/plugin/

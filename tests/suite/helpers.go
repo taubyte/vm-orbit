@@ -28,6 +28,7 @@ func Builder() buildHelper {
 
 type suite struct {
 	ctx      context.Context
+	ctxC     context.CancelFunc
 	instance vm.Instance
 	runtime  vm.Runtime
 }
@@ -41,6 +42,9 @@ func New(ctx context.Context) (*suite, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
+
+	var ctxC context.CancelFunc
+	ctx, ctxC = context.WithCancel(ctx)
 
 	tns := mocks.New()
 	rslver := resolver.New(tns)
@@ -57,16 +61,19 @@ func New(ctx context.Context) (*suite, error) {
 		vmContext.Commit("head_commit"),
 	)
 	if err != nil {
+		ctxC()
 		return nil, fmt.Errorf("creating new vm context failed with: %w", err)
 	}
 
 	instance, err := vmService.New(vmCtx, vm.Config{})
 	if err != nil {
+		ctxC()
 		return nil, fmt.Errorf("creating new vm instance failed with: %w", err)
 	}
 
 	rt, err := instance.Runtime(nil)
 	if err != nil {
+		ctxC()
 		return nil, fmt.Errorf("creating new vm runtime failed with: %w", err)
 	}
 
@@ -74,6 +81,7 @@ func New(ctx context.Context) (*suite, error) {
 		instance: instance,
 		runtime:  rt,
 		ctx:      ctx,
+		ctxC:     ctxC,
 	}, nil
 }
 
@@ -96,6 +104,12 @@ func (s *suite) AttachPluginFromPath(filename string) error {
 	}
 
 	return nil
+}
+
+func (s *suite) Close() {
+	s.runtime.Close()
+	s.instance.Close()
+	s.ctxC()
 }
 
 func (s *suite) WasmModule(filename string) (*module, error) {

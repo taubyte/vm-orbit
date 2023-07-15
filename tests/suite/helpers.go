@@ -3,6 +3,8 @@ package suite
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/taubyte/go-interfaces/services/tns/mocks"
 	"github.com/taubyte/go-interfaces/vm"
@@ -136,6 +138,11 @@ func (m *module) Call(ctx context.Context, function string, args ...interface{})
 	}
 
 	return ret, nil
+}
+
+func (m *module) Debug() {
+	io.Copy(os.Stdout, m.suite.instance.Stdout())
+	io.Copy(os.Stderr, m.suite.instance.Stderr())
 }
 
 func GoBuildTags(tags ...string) []string {

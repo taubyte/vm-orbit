@@ -3,11 +3,13 @@ package goBuilder
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"path"
 
 	_ "embed"
 
+	"github.com/pterm/pterm"
 	"github.com/taubyte/vm-orbit/tests/suite/builders/common"
 	"github.com/taubyte/vm-orbit/tests/suite/builders/fixtures"
 
@@ -45,13 +47,21 @@ func (g *goBuilder) Name() string {
 }
 
 func (g *goBuilder) Plugin(_path string, name string, extraArgs ...string) (string, error) {
-	args := []string{"build", "-o", name}
+	tempDir, err := os.MkdirTemp("/tmp", "*")
+	if err != nil {
+		return "", fmt.Errorf("creating temp dir failed with: %w", err)
+	}
+
+	pterm.Success.Printfln("Building go plugin in %s", tempDir)
+
+	output := path.Join(tempDir, name)
+	args := []string{"build", "-o", output}
 	args = append(args, extraArgs...)
 	cmd := exec.Command("go", args...)
 	cmd.Dir = _path
-	if err := cmd.Run(); err != nil {
+	if err = cmd.Run(); err != nil {
 		return "", fmt.Errorf("building go plugin failed with: %w", err)
 	}
 
-	return path.Join(_path, name), nil
+	return output, nil
 }

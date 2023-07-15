@@ -32,7 +32,7 @@ func TestHelloWorld(t *testing.T) {
 	assert.NilError(t, err)
 
 	// build a wasm file from our fixture go file
-	wasmPath, err := builder.Wasm(ctx, path.Join(wd, "fixtures", "dfunc.go"))
+	wasmPath, err := builder.Wasm(ctx, path.Join(wd, "_fixtures", "dfunc.go"))
 	assert.NilError(t, err)
 
 	// get get the wasm module from our wasm file

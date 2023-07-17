@@ -65,7 +65,12 @@ func (p *pluginInstance) makeFunc(paramTypes []reflect.Type, retTypes []reflect.
 
 			in := make([]uint64, 0, len(args))
 			for i := 2; i < len(args); i++ {
-				in = append(in, uint64(args[i].Int()))
+				switch args[i].Kind() {
+				case reflect.Int16, reflect.Int32, reflect.Int64:
+					in = append(in, uint64(args[i].Int()))
+				case reflect.Float32, reflect.Float64:
+					in = append(in, uint64(args[i].Float()))
+				}
 			}
 
 			p.plugin.lock.RLock()

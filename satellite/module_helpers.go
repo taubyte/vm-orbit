@@ -110,7 +110,7 @@ func (h *moduleLink) WriteStringSliceSize(sizePtr uint32, val []string) (uint32,
 		return 0, err
 	}
 
-	return h.WriteUint32(sizePtr, uint32(len(val)))
+	return h.WriteUint32(sizePtr, uint32(len(data)))
 }
 
 func (h *moduleLink) ReadBytesSlice(ptr uint32, size uint32) ([][]byte, error) {

@@ -1,2 +1,9 @@
-# Plugin 
-plugin.*
+# Ignore all .wasm files used for tests
+*.wasm
+
+# Ignore everything in the /tests/fixtures directory
+/tests/e2e/go/fixtures/*
+
+# But do not ignore /tests/fixtures/code and /tests/fixtures/plugin directories
+!/tests/e2e/go/fixtures/_code/
+!/tests/e2e/go/fixtures/plugin/

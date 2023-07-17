@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/taubyte/vm-orbit/tests/suite"
+	builder "github.com/taubyte/vm-orbit/tests/suite/builders/go"
 	"gotest.tools/v3/assert"
 )
 
@@ -18,13 +19,13 @@ func TestHelloWorld(t *testing.T) {
 	assert.NilError(t, err)
 
 	// create a goBuilder used to build plugins and wasm
-	builder := suite.Builder().Go()
+	goBuilder := builder.New()
 
 	wd, err := os.Getwd()
 	assert.NilError(t, err)
 
 	// build the plugin from the parent directory with our main.go with the plugin export
-	pluginPath, err := builder.Plugin(path.Join(wd, ".."), "example")
+	pluginPath, err := goBuilder.Plugin(path.Join(wd, ".."), "example")
 	assert.NilError(t, err)
 
 	// Attaches plugin to our testing suite from the path resolved by builder.Plugin()
@@ -32,7 +33,7 @@ func TestHelloWorld(t *testing.T) {
 	assert.NilError(t, err)
 
 	// build a wasm file from our fixture go file
-	wasmPath, err := builder.Wasm(ctx, path.Join(wd, "_fixtures", "dfunc.go"))
+	wasmPath, err := goBuilder.Wasm(ctx, path.Join(wd, "_fixtures", "dfunc.go"))
 	assert.NilError(t, err)
 
 	// get get the wasm module from our wasm file
@@ -44,5 +45,6 @@ func TestHelloWorld(t *testing.T) {
 	assert.NilError(t, err)
 
 	// Prints stdOut and stdErr from our runtime
+	// Expected output hello world!
 	module.Debug()
 }

@@ -1,4 +1,4 @@
-package common
+package builders
 
 import (
 	"context"
@@ -11,17 +11,17 @@ import (
 	build "github.com/taubyte/builder"
 )
 
-// Fixtures writes the given builders fixture tarball to a temp directory and unzips it
-func Fixtures(builder Builder) (tempDir string, err error) {
+// CopyFixture writes the given fixture tarball to a temp directory and unzips it
+func CopyFixture(fixture []byte) (tempDir string, err error) {
 	tempDir, err = os.MkdirTemp("/tmp", "*")
 	if err != nil {
 		err = fmt.Errorf("creating temp dir failed with: %w", err)
 		return
 	}
 
-	pterm.Success.Printfln("Building %s code in: %s", builder.Name(), tempDir)
+	pterm.Success.Printfln("Building code in: %s", tempDir)
 
-	if err = os.WriteFile(path.Join(tempDir, "fixture.tar"), builder.Fixture(), 0644); err != nil {
+	if err = os.WriteFile(path.Join(tempDir, "fixture.tar"), fixture, 0644); err != nil {
 		err = fmt.Errorf("writing fixture.tar failed with: %w", err)
 		return
 	}
@@ -36,7 +36,7 @@ func Fixtures(builder Builder) (tempDir string, err error) {
 }
 
 // Wasm builds the a wasm file from the given directory
-func Wasm(ctx context.Context, buildHelper Builder, buildDir string) (wasmFile string, err error) {
+func Wasm(ctx context.Context, buildDir string) (wasmFile string, err error) {
 	builder, err := build.New(ctx, buildDir)
 	if err != nil {
 		err = fmt.Errorf("new builder failed with: %w", err)

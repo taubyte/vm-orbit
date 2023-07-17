@@ -109,9 +109,9 @@ Suite has helpers to generate these
 You will need to create a builder for the language you will be using to generate your Wasm file and plugin
 
 ```go 
-	import "github.com/taubyte/vm-orbit/tests/suite"
+	import goBuilder "github.com/taubyte/vm-orbit/tests/suite/builders/go"
 
-	builder := suite.Builder.Go()
+	builder := goBuilder.New()
 ```
 
 #### Build Your Plugin

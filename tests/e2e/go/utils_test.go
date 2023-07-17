@@ -10,7 +10,7 @@ import (
 	"github.com/otiai10/copy"
 	"github.com/taubyte/go-interfaces/vm"
 	"github.com/taubyte/vm-orbit/tests/suite"
-	"github.com/taubyte/vm-orbit/tests/suite/builders/common"
+	builder "github.com/taubyte/vm-orbit/tests/suite/builders/go"
 	"gotest.tools/v3/assert"
 )
 
@@ -21,7 +21,6 @@ var (
 	pluginBinary string
 
 	wasmFixtures = []string{"data_helpers", "size_helpers", "basic"}
-	builder      common.Builder
 	pluginName   = "testPlugin"
 )
 
@@ -37,15 +36,9 @@ func initializeAssetPaths() (err error) {
 	return
 }
 
-func initializeBuilder() {
-	if builder == nil {
-		builder = suite.Builder().Go()
-	}
-}
-
 func initializePlugin(extraArgs ...string) (err error) {
-	initializeBuilder()
-	pluginFile, err := builder.Plugin(path.Join(fixtureDir, "plugin"), pluginName, extraArgs...)
+	goBuilder := builder.New()
+	pluginFile, err := goBuilder.Plugin(path.Join(fixtureDir, "plugin"), pluginName, extraArgs...)
 	if err != nil {
 		return fmt.Errorf("generating plugin failed with: %w", err)
 	}
@@ -58,7 +51,8 @@ func initializePlugin(extraArgs ...string) (err error) {
 }
 
 func initializeWasm(name string) (err error) {
-	wasmFile, err := builder.Wasm(context.TODO(), path.Join(fixtureDir, "_code", name+".go"))
+	goBuilder := builder.New()
+	wasmFile, err := goBuilder.Wasm(context.TODO(), path.Join(fixtureDir, "_code", name+".go"))
 	if err != nil {
 		return fmt.Errorf("generating %s.wasm failed with: %w", name, err)
 	}

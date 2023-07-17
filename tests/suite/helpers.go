@@ -10,8 +10,6 @@ import (
 	"github.com/taubyte/go-interfaces/vm"
 	"github.com/taubyte/utils/id"
 	vmPlugin "github.com/taubyte/vm-orbit/plugin/vm"
-	"github.com/taubyte/vm-orbit/tests/suite/builders"
-	"github.com/taubyte/vm-orbit/tests/suite/builders/common"
 	fileBE "github.com/taubyte/vm/backend/file"
 	vmContext "github.com/taubyte/vm/context"
 	loader "github.com/taubyte/vm/loaders/wazero"
@@ -19,16 +17,6 @@ import (
 	service "github.com/taubyte/vm/service/wazero"
 	source "github.com/taubyte/vm/sources/taubyte"
 )
-
-// buildHelper has methods for our supported language helpers
-type buildHelper interface {
-	Go() common.Builder
-}
-
-// Builder returns a buildHelper with common helpers used for testing
-func Builder() buildHelper {
-	return builders.New()
-}
 
 // suite wraps methods used to test a wasm module with injected plugins, locally
 type suite struct {

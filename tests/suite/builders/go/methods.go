@@ -10,8 +10,7 @@ import (
 	_ "embed"
 
 	"github.com/pterm/pterm"
-	"github.com/taubyte/vm-orbit/tests/suite/builders/common"
-	"github.com/taubyte/vm-orbit/tests/suite/builders/fixtures"
+	"github.com/taubyte/vm-orbit/tests/suite/builders"
 
 	"github.com/otiai10/copy"
 )
@@ -25,7 +24,7 @@ func New() *goBuilder {
 }
 
 func (g *goBuilder) Wasm(ctx context.Context, codeFiles ...string) (wasmFile string, err error) {
-	tempDir, err := common.Fixtures(g)
+	tempDir, err := builders.CopyFixture(fixture)
 	if err != nil {
 		return
 	}
@@ -37,11 +36,7 @@ func (g *goBuilder) Wasm(ctx context.Context, codeFiles ...string) (wasmFile str
 		}
 	}
 
-	return common.Wasm(ctx, g, tempDir)
-}
-
-func (g *goBuilder) Fixture() []byte {
-	return fixtures.GoFixture
+	return builders.Wasm(ctx, tempDir)
 }
 
 func (g *goBuilder) Name() string {

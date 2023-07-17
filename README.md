@@ -1,14 +1,21 @@
 # vm-orbit
-A tool for creating plugin binaries to be deployed on a Taubyte Cloud 
+A framework for creating plugins for the Taubyte WebAssembly Virtual Machine
 
 # Creating A Plugin 
 
 ## Exported Functions
-* Plugins can be created from structures with method names starting with **W_**
-* The signature parameters can include the following: 
-    * context, module,uint, uint8, uint16, uint32, uint64,int, int8, int16, int32, int64 
-        * module is used use for reading and writing to/from module memory
-        * though context and module are optional, if used they must be in the first and second parameters, respectfully 
+Plugins are fashioned from structures that bear method names prefixed with **W_**. The signature parameters can be inclusive of the following:
+
+* context
+* module
+* uint, uint8, uint16, uint32, uint64
+* int, int8, int16, int32, int64
+
+In these parameters:
+
+* The `module` parameter enables reading and writing to/from the module memory.
+* The `context` and `module` parameters, although optional, must be in the first and second positions respectively, if included.
+
 #### Example
 ```go 
 type tester struct{}
@@ -43,9 +50,8 @@ func (t *tester) W_sum(a, b int64) int64 {
 ```
 
 ## Building The Plugin
-* Plugins are meant to be built as a binary to be injected for use the Taubyte VM
-* To do so a main() function must be declared in a main package 
-* Utilizing the plugin.Serve function the structured plugin methods can be exported 
+Because it is bases on the [Hashicorp Plugin System](https://github.com/hashicorp/go-plugin), plugins are designed to be compiled as binaries to be incorporated for usage in the Taubyte VM. To achieve this, a `main()` function needs to be defined in a main package. By employing the `plugin.Serve` function, the structured plugin methods can be exported.
+
 #### Example
 ```go
 package main
@@ -80,33 +86,30 @@ Once Network has been started (after  `SUCCESS  Universe <name-of-universe> star
 dream inject attachPlugin -p <path/to/plugin/binary>
 ```
 
-### Create a Dffunc on Console 
-You can access a local instance of webconsole by running 
-```bash 
-dream status console 
-```
+### Create a Dfunc on Web Console 
+Connect to the [Taubyte Web Console](https://console.taubyte.com), Select "Dreamland" as a network.
 
-Create a [DFUNC](#creating-a-dfunc-with-reference-to-a-plugin) 
-It is recommended to make a http GET function to quickly test, using a generated domain
+Next, Create a [DFUNC](#creating-a-dfunc-with-reference-to-a-plugin).
+It is advisable to set up an HTTP GET function for rapid testing, using a generated domain.
 
-To call this http DFunc you will need to add the generated fqdn to /etc/host 127.0.0.1 
-You will also need to append the port that Substrate(node) protocol is running on to the url
-You can get this port by running
+To call this HTTP DFunc, you will need to add the generated FQDN to /etc/host as 127.0.0.1. You will also need to append the port that the Substrate(node) protocol is running on to the URL. Retrieve this port by executing:
+
 ```bash
 dream status node
 ```
 
-after these two steps hitting `<generated-fqdn>:<node-port>/<function-path>` will execute your function
+After these two steps, accessing `http://<generated-fqdn>:<node-port>/<function-path>` will execute your function. Note that you'll need to use `http` as `dreamland` does not support `https` as of today.
 
 ## Go Test 
-`vm-orbit/tests/suite` can be used to create local plugin tests quickly 
-For the testing the following required: 
+`vm-orbit/tests/suite` allows for creating local plugin tests swiftly. For testing, the following are required: 
+
 * Plugin Binary
 * Wasm File with an exported method calling your plugin method
 
-Suite has helpers to generate these
+Suite provides helper functions to generate these.
+
 ### Using the Builder For Plugins and Wasm
-You will need to create a builder for the language you will be using to generate your Wasm file and plugin
+Firstly, create a builder for the language you are using to generate your Wasm file and plugin:
 
 ```go 
 	import goBuilder "github.com/taubyte/vm-orbit/tests/suite/builders/go"
@@ -120,7 +123,7 @@ You will need to create a builder for the language you will be using to generate
 ```
 
 #### Build Your Wasm File 
-You will need to write code files that will properly reference your plugins refer to: [DFUNC](#creating-a-dfunc-with-reference-to-a-plugin)
+To build the Wasm file, you'll need to write code files that appropriately reference your plugins. Refer to: [dFunc](#creating-a-dfunc-with-reference-to-a-plugin). Then use the builder to create the Wasm file:
 
 Then used the builder to generate the wasm file
 ```go 
@@ -177,7 +180,7 @@ func dFunc() {
 }
 ```
 * The comments before the function declarations are required
-* the //go:wasm-module comment gives a reference to the name of the wasm module of the plugin 
+* the `//go:wasm-module` comment gives a reference to the name of the wasm module of the plugin 
 	* Example:
 	```go
 	package main
@@ -203,14 +206,14 @@ func dFunc() {
 	```
 	* Here the name of this method would be `helloSize`
 
-#### Understanding The Signature in the DFunc 
+#### Understanding The Signature in the dFunc 
 A good rule of thumb is if a value needs to be read from memory or written to the signature value needs to be a pointer. If the value is interpreted a raw value should be passed.
 
 Uints, Floats, and Ints and their pointers are supported types for the signature
 
 Any data more complex than these types are interpreted as []byte which must be read or written to in memory. 
 
-Any data more complex than []byte is encoded to []byte through the use of helper methods, already available in an orbit module 
+Any data more complex than []byte is encoded to []byte through the use of helper methods, already available in an orbit module. Example:
 ```go 
 import 	"github.com/taubyte/vm-orbit/satellite"
 
@@ -222,11 +225,10 @@ func (h *helloWorlder) W_readWrite(
 ){
 	stringSlice, err := module.ReadStringSlice(stringSlicePtr,stringSliceSize)
 }
-
-
 ```
 
-More encoding methods can be found at `github.com/taubyte/go-sdk/utils/codec`
+More encoding methods can be found at `github.com/taubyte/go-sdk/utils/codec`.
+
 # Building Proto 
 
 ## Install go protoc gen
@@ -247,7 +249,8 @@ go generate ./...
 
 
 # License
-Please see the LICENSE file for details.
+This project is licensed under the BSD 3-Clause License. For more details, see the LICENSE file.
+
 
 
 # Help

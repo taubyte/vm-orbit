@@ -78,7 +78,7 @@ func (p *pluginInstance) makeFunc(paramTypes []reflect.Type, retTypes []reflect.
 
 			cOut, err := p.satellite.Call(ctx, module, def.Name(), in)
 			if err != nil {
-				panic(fmt.Sprintf("calling `%s/%s` failed with: %s", module, def.Name(), err))
+				panic(fmt.Sprintf("[rpc] calling `%s/%s` failed with: %s (ctx.err=%s)", module.Name(), def.Name(), err, ctx.Err()))
 			}
 
 			_out := make([]reflect.Value, len(cOut))

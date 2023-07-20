@@ -132,7 +132,7 @@ func (m *module) Call(ctx context.Context, function string, args ...interface{})
 
 	ret := fI.Call(ctx, args...)
 	if ret.Error() != nil {
-		return nil, fmt.Errorf("calling `%s` failed with: %w", function, ret.Error())
+		return nil, fmt.Errorf("calling `%s` failed with: %w (ctx.err=%w)", function, ret.Error(), ctx.Err())
 	}
 
 	return ret, nil

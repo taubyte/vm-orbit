@@ -70,6 +70,12 @@ func (p *vmPlugin) watch() error {
 		defer watcher.Close()
 		for {
 			select {
+			case <-time.After(ProcWatchInterval):
+				if p.proc.Exited() {
+					if err := p.reload(); err != nil {
+						log.Println("reloading exited plugin error" + err.Error())
+					}
+				}
 			case event := <-watcher.Events:
 				if event.Name == p.origin && (event.Op&fsnotify.Write == fsnotify.Write || event.Op&fsnotify.Create == fsnotify.Create) {
 					if err = p.waitTillCopyIsDone(); err != nil {

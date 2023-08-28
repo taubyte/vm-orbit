@@ -1,12 +1,11 @@
-package plugin
+package satellite
 
 import (
 	"reflect"
 	"strings"
 
 	"github.com/hashicorp/go-plugin"
-	"github.com/taubyte/vm-orbit/plugin/vm"
-	"github.com/taubyte/vm-orbit/satellite"
+	"github.com/taubyte/vm-orbit/satellite/vm"
 )
 
 func Export(moduleName string, structure interface{}) {
@@ -17,7 +16,7 @@ func export(moduleName string, exports func() map[string]interface{}) {
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: vm.HandShake(),
 		Plugins: map[string]plugin.Plugin{
-			"satellite": satellite.New(moduleName, exports),
+			"satellite": New(moduleName, exports),
 		},
 		GRPCServer: plugin.DefaultGRPCServer,
 	})

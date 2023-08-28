@@ -9,7 +9,7 @@ import (
 
 	"gotest.tools/v3/assert"
 
-	vmPlugin "github.com/taubyte/vm-orbit/plugin/vm"
+	vmPlugin "github.com/taubyte/vm-orbit/satellite/vm"
 	"github.com/taubyte/vm-orbit/tests/suite"
 )
 

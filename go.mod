@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/fsnotify/fsnotify v1.6.0
+	github.com/go-python/gopy v0.4.7
 	github.com/hashicorp/go-plugin v1.4.10
 	github.com/multiformats/go-multihash v0.2.1
 	github.com/otiai10/copy v1.12.0

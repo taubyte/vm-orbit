@@ -4,7 +4,6 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/taubyte/vm-orbit/plugin"
 	"github.com/taubyte/vm-orbit/satellite"
 )
 
@@ -153,5 +152,5 @@ func (t *tester) W_readWriteSize(
 }
 
 func main() {
-	plugin.Export("testing", &tester{})
+	satellite.Export("testing", &tester{})
 }

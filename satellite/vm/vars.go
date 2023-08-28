@@ -1,7 +1,13 @@
 package vm
 
 import (
+	"time"
+
 	"github.com/hashicorp/go-plugin"
+)
+
+var (
+	ProcWatchInterval = time.Second
 )
 
 func HandShake() plugin.HandshakeConfig {

@@ -9,7 +9,7 @@ import (
 	"github.com/taubyte/go-interfaces/services/tns/mocks"
 	"github.com/taubyte/go-interfaces/vm"
 	"github.com/taubyte/utils/id"
-	vmPlugin "github.com/taubyte/vm-orbit/plugin/vm"
+	vmPlugin "github.com/taubyte/vm-orbit/satellite/vm"
 	fileBE "github.com/taubyte/vm/backend/file"
 	vmContext "github.com/taubyte/vm/context"
 	loader "github.com/taubyte/vm/loaders/wazero"

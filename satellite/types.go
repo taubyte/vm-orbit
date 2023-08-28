@@ -14,6 +14,13 @@ type satellite struct {
 	exports map[string]interface{}
 }
 
+type GRPCPluginServer struct {
+	broker *plugin.GRPCBroker
+	proto.UnimplementedPluginServer
+
+	satellite *satellite
+}
+
 type Module interface {
 	MemoryRead(offset uint32, size uint32) ([]byte, error)
 	MemoryWrite(offset uint32, data []byte) (n uint32, err error)

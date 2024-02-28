@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path"
 	"testing"
@@ -25,10 +26,11 @@ func TestHelloWorld(t *testing.T) {
 	assert.NilError(t, err)
 
 	// build the plugin from the parent directory with our main.go with the plugin export
-	pluginPath, err := goBuilder.Plugin(path.Join(wd, ".."), "example")
+	pluginPath, err := goBuilder.Plugin(path.Join(wd, ".."), "helloWorld")
 	assert.NilError(t, err)
 
 	// Attaches plugin to our testing suite from the path resolved by builder.Plugin()
+	fmt.Println(pluginPath)
 	err = testingSuite.AttachPluginFromPath(pluginPath)
 	assert.NilError(t, err)
 
@@ -46,5 +48,5 @@ func TestHelloWorld(t *testing.T) {
 
 	// Prints stdOut and stdErr from our runtime
 	// Expected output hello world!
-	module.Debug()
+	module.AssetOutput(t, "hello world!\n")
 }

@@ -1,12 +1,13 @@
 package suite
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
+	"testing"
 
-	"github.com/taubyte/go-interfaces/services/tns/mocks"
 	"github.com/taubyte/go-interfaces/vm"
 	"github.com/taubyte/utils/id"
 	vmPlugin "github.com/taubyte/vm-orbit/satellite/vm"
@@ -16,6 +17,7 @@ import (
 	resolver "github.com/taubyte/vm/resolvers/taubyte"
 	service "github.com/taubyte/vm/service/wazero"
 	source "github.com/taubyte/vm/sources/taubyte"
+	"gotest.tools/v3/assert"
 )
 
 // suite wraps methods used to test a wasm module with injected plugins, locally
@@ -41,8 +43,7 @@ func New(ctx context.Context) (*suite, error) {
 	var ctxC context.CancelFunc
 	ctx, ctxC = context.WithCancel(ctx)
 
-	tns := mocks.New()
-	rslver := resolver.New(tns)
+	rslver := resolver.New(nil)
 	ldr := loader.New(rslver, fileBE.New())
 	src := source.New(ldr)
 	vmService := service.New(ctx, src)
@@ -142,6 +143,19 @@ func (m *module) Call(ctx context.Context, function string, args ...interface{})
 func (m *module) Debug() {
 	io.Copy(os.Stdout, m.suite.instance.Stdout())
 	io.Copy(os.Stderr, m.suite.instance.Stderr())
+}
+
+// Debug is intended to be used after Call() has been invoked, used to copy the wasm runtime stdOut and stdErr
+func (m *module) AssetOutput(t *testing.T, value string) {
+	var b bytes.Buffer
+	io.Copy(&b, m.suite.instance.Stdout())
+	assert.Equal(t, value, string(b.Bytes()))
+}
+
+func (m *module) AssetErrorOutput(t *testing.T, value string) {
+	var b bytes.Buffer
+	io.Copy(&b, m.suite.instance.Stderr())
+	assert.Equal(t, value, string(b.Bytes()))
 }
 
 // Returns arguments to be appended to a builder.Plugin call for adding build tags

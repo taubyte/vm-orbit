@@ -255,9 +255,3 @@ This project is licensed under the BSD 3-Clause License. For more details, see t
 
 # Help
 Find us on our [Discord](https://discord.gg/taubyte)
-
-
-# Maintainers
- - Samy Fodil @samyfodil
- - Tafseer Khan @tafseer-khan
-

@@ -2,8 +2,6 @@ module github.com/taubyte/vm-orbit
 
 go 1.21
 
-replace github.com/taubyte/tau => ../tau
-
 require (
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/hashicorp/go-plugin v1.4.10
@@ -12,9 +10,9 @@ require (
 	github.com/pterm/pterm v0.12.65
 	github.com/taubyte/builder v0.2.2
 	github.com/taubyte/go-interfaces v0.2.14
-	github.com/taubyte/go-sdk v0.3.8
+	github.com/taubyte/go-sdk v0.3.9
 	github.com/taubyte/utils v0.1.7
-	github.com/taubyte/vm v1.0.5-0.20240228223105-36b36bf603c4
+	github.com/taubyte/vm v1.0.5
 	google.golang.org/grpc v1.60.1
 	google.golang.org/protobuf v1.32.0
 	gotest.tools/v3 v3.5.1
@@ -52,7 +50,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/elastic/gosigar v0.14.2 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
-	github.com/fatih/color v1.7.0 // indirect
+	github.com/fatih/color v1.14.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/flynn/noise v1.1.0 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
